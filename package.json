@@ -1,0 +1,12 @@
+{
+  "name": "proflee-readme-terminal",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "professorLee 个人 profile README 的终端日志动态 SVG 生成器（Node.js）",
+  "scripts": {
+    "start": "node src/server.mjs --port 8731",
+    "generate": "node src/server.mjs --once dist/terminal.svg"
+  },
+  "engines": { "node": ">=22" }
+}

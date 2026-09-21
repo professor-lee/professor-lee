@@ -1,0 +1,13 @@
+# 生成物
+dist/
+*.tmp
+
+# 运行时缓存（数据抓取结果，含时间戳，不入库）
+.cache/
+
+# 依赖
+node_modules/
+
+# 编辑器/系统
+.DS_Store
+*.swp
