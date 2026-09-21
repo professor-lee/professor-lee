@@ -186,7 +186,7 @@ text{font-family:'profLee-Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monos
 .bg{fill:#ECEFF4}.pn{fill:#E5E9F0}.bd{fill:#D8DEE9}.t{fill:#2E3440}.d{fill:#4C566A}.f{fill:#4C566A}
 .acc{fill:#3B4252}.ok{fill:#3B4252}.warn{fill:#D08770}.ka{fill:#3B4252}.kb{fill:#3B4252}
 .bar{fill:#5E81AC}.be{fill:#4C566A;fill-opacity:.32}.sw{stroke:#4C566A;stroke-opacity:.55;stroke-width:.9}
-.h0{fill:#D8DEE9}.h1{fill:#5E81AC;fill-opacity:.30}.h2{fill:#5E81AC;fill-opacity:.55}.h3{fill:#5E81AC;fill-opacity:.78}.h4{fill:#5E81AC}
+.h0{fill:#4C566A;fill-opacity:.20}.h1{fill:#5E81AC;fill-opacity:.42}.h2{fill:#5E81AC;fill-opacity:.55}.h3{fill:#5E81AC;fill-opacity:.78}.h4{fill:#5E81AC}
 @keyframes fin{from{opacity:0}to{opacity:1}}
 @keyframes fout{from{opacity:1}to{opacity:0}}
 @keyframes blk{0%,49%{opacity:1}50%,100%{opacity:0}}
@@ -198,7 +198,7 @@ text{font-family:'profLee-Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monos
 .bg{fill:#2E3440}.pn{fill:#3B4252}.bd{fill:#434C5E}.t{fill:#ECEFF4}.d{fill:#D8DEE9}.f{fill:#81A1C1}
 .acc{fill:#88C0D0}.ok{fill:#A3BE8C}.warn{fill:#EBCB8B}.ka{fill:#A3BE8C}.kb{fill:#B48EAD}
 .bar{fill:#88C0D0}.be{fill:#434C5E}.sw{stroke:#2E3440;stroke-opacity:.9;stroke-width:.9}
-.h0{fill:#3B4252}.h1{fill:#88C0D0;fill-opacity:.14}.h2{fill:#88C0D0;fill-opacity:.38}.h3{fill:#88C0D0;fill-opacity:.65}.h4{fill:#88C0D0}
+.h0{fill:#4C566A;fill-opacity:.55}.h1{fill:#88C0D0;fill-opacity:.22}.h2{fill:#88C0D0;fill-opacity:.38}.h3{fill:#88C0D0;fill-opacity:.65}.h4{fill:#88C0D0}
 }
 </style>`)
   out.push(`<rect class="bg" width="${GEO.W}" height="${H}"/>`)
