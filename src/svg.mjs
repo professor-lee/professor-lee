@@ -185,13 +185,15 @@ export function renderSvg({ data, now = new Date() }) {
 text{font-family:'profLee-Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:${F.toFixed(4)}px}
 .bg{fill:#ECEFF4}.pn{fill:#E5E9F0}.bd{fill:#D8DEE9}.t{fill:#2E3440}.d{fill:#4C566A}.f{fill:#4C566A}
 .acc{fill:#3B4252}.ok{fill:#3B4252}.warn{fill:#D08770}.ka{fill:#3B4252}.kb{fill:#3B4252}
-.bar{fill:#5E81AC}.be{fill:#D8DEE9}.sw{stroke:#4C566A;stroke-opacity:.55;stroke-width:.9}
+.bar{fill:#5E81AC}.be{fill:#4C566A;fill-opacity:.32}.sw{stroke:#4C566A;stroke-opacity:.55;stroke-width:.9}
 .h0{fill:#D8DEE9}.h1{fill:#5E81AC;fill-opacity:.30}.h2{fill:#5E81AC;fill-opacity:.55}.h3{fill:#5E81AC;fill-opacity:.78}.h4{fill:#5E81AC}
 @keyframes fin{from{opacity:0}to{opacity:1}}
 @keyframes fout{from{opacity:1}to{opacity:0}}
 @keyframes blk{0%,49%{opacity:1}50%,100%{opacity:0}}
 .an{animation:fin .22s linear both}
-.lg{animation:fin .20s linear both,fout .18s linear both}
+.lg{animation:fin .20s linear both,fout .18s linear forwards}
+/* 注意：fout 必须是 forwards 而非 both —— both 会在其延迟开始前就回填 from(opacity:1)，
+   把入场动画整个盖掉（实测表现：boot 行从 t=0 就可见、压在开场 logo 上） */
 @media (prefers-color-scheme: dark){
 .bg{fill:#2E3440}.pn{fill:#3B4252}.bd{fill:#434C5E}.t{fill:#ECEFF4}.d{fill:#D8DEE9}.f{fill:#81A1C1}
 .acc{fill:#88C0D0}.ok{fill:#A3BE8C}.warn{fill:#EBCB8B}.ka{fill:#A3BE8C}.kb{fill:#B48EAD}
@@ -251,9 +253,9 @@ text{font-family:'profLee-Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monos
     }
     if (r.segs[0]?.__bar) {           // 字符进度条（逐格生长）
       const b = r.segs[0]
-      let s = `<text x="${x0}" y="${r.y.toFixed(2)}" xml:space="preserve"><tspan class="d">  ${esc(b.label)}</tspan>`
+      let s = `<text class="an" x="${x0}" y="${r.y.toFixed(2)}" style="animation-delay:${delay}s" xml:space="preserve"><tspan class="d">  ${esc(b.label)}</tspan>`
       ;[...b.filled].forEach((_, k) => {
-        s += `<tspan class="bar an" style="animation-delay:${(T.barAt + k * T.barCharStep).toFixed(2)}s">█</tspan>`
+        s += `<tspan class="bar an" style="animation-delay:${(Math.max(T.barAt, parseFloat(delay)) + k * T.barCharStep).toFixed(2)}s">█</tspan>`
       })
       s += `<tspan class="be">${esc(b.empty)}</tspan><tspan class="t"> ${esc(b.value)}</tspan></text>`
       out.push(s); continue
@@ -267,7 +269,7 @@ text{font-family:'profLee-Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monos
   const cy = last.y + LP
   const cx = x0 + 23 * 0.6 * F
   out.push(`<text class="an acc" x="${x0}" y="${cy.toFixed(2)}" style="animation-delay:${(T.finalAt + rows.length * T.finalStep + 0.25).toFixed(2)}s" xml:space="preserve">[professorLee@github ~]$ </text>`)
-  out.push(`<rect class="acc" x="${cx.toFixed(1)}" y="${(cy - F * 0.8).toFixed(1)}" width="${(0.6 * F).toFixed(1)}" height="${(F * 0.92).toFixed(1)}" style="animation:blk .8s step-end ${(T.finalAt + rows.length * T.finalStep + 0.4).toFixed(2)}s infinite"/>`)
+  out.push(`<g class="an" style="animation-delay:${(T.finalAt + rows.length * T.finalStep + 0.4).toFixed(2)}s"><rect class="acc" x="${cx.toFixed(1)}" y="${(cy - F * 0.8).toFixed(1)}" width="${(0.6 * F).toFixed(1)}" height="${(F * 0.92).toFixed(1)}" style="animation:blk .8s step-end 0s infinite"/></g>`)
   out.push(`</svg>`)
   return out.join('\n')
 }
