@@ -80,7 +80,12 @@ async function cached(key, ttlSec, fn) {
 
 // ---------- GitHub ----------
 const GH = 'https://api.github.com'
-const ghHeaders = (tok) => ({ Authorization: `bearer ${tok}`, 'User-Agent': 'profLee-readme', Accept: 'application/vnd.github+json' })
+// 无 token 时不发 Authorization 头（`bearer null` 会被 GitHub 判 401，连公开数据也读不到）
+const ghHeaders = (tok) => ({
+  ...(tok ? { Authorization: `bearer ${tok}` } : {}),
+  'User-Agent': 'profLee-readme',
+  Accept: 'application/vnd.github+json',
+})
 
 export function contributions() {
   return cached('contributions', 3600, async () => {
@@ -100,7 +105,7 @@ export function contributions() {
 
 export function commitBuckets() {
   return cached('commitBuckets', 3600, async () => {
-    const tok = ghToken(); if (!tok) return null
+    const tok = ghToken()          // 公开 Search 端点未认证也可用（额度低，失败会回退缓存）
     const counts = Object.fromEntries(BUCKETS.map(b => [b.key, 0]))
     let total = 0
     for (let page = 1; page <= 3; page++) {
@@ -124,7 +129,7 @@ export function commitBuckets() {
 
 export function languages() {
   return cached('languages', 86400, async () => {
-    const tok = ghToken(); if (!tok) return null
+    const tok = ghToken()          // 公开 REST 端点未认证也可用
     const r = await fetch(`${GH}/users/${MACHINE.profile}/repos?per_page=100`, { headers: ghHeaders(tok) })
     if (!r.ok) throw new Error(`repos ${r.status}`)
     const repos = (await r.json()).filter(x => !x.fork)
