@@ -130,7 +130,7 @@ export function finalLines({ data, now }) {
   push(...boxBotSegs())
 
   push(...boxTopSegs('About / DateTime'))
-  push(S('│ ', 'bd'), S(padEnd('OS Age', 6), 'kb'), S(' '), S(padEnd(`${ageYears(now)} years`, 14), 't'), S(' '), S(padEnd('Wx', 5), 'kb'), S(' '), S(w ? w.text : '--', 't'))
+  push(S('│ ', 'bd'), S(padEnd('OS Age', 6), 'kb'), S(' '), S(padEnd(`${ageYears(now)} years`, 14), 't'), S(' '), S(padEnd('Sky', 5), 'kb'), S(' '), S(w ? w.text : '--', 't'))
   push(S('│ ', 'bd'), S(padEnd('Host', 6), 'kb'), S(' '), S(padEnd('Beijing CN', 14), 't'), S(' '), S(padEnd('Repos', 5), 'kb'), S(' '), S(l ? `${l.repos}/${l.stars} stars` : '--', 't'))
   push(S('│ ', 'bd'), S(padEnd('Local', 6), 'kb'), S(' '), S(`${ymdhm.slice(11)} (${bucketOf(hour)})`, 't'))
   push(S('│ ', 'bd'), S(padEnd('Commit', 6), 'kb'), S(' '), S(c ? `${c.total} in last 12 months` : '--', 't'))
