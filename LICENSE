@@ -19,22 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-Third-party notices
-
-The embedded font subset shipped as assets/fonts/profLee-mono.woff2 is derived
-from JetBrains Mono (JetBrainsMono Nerd Font Mono):
-
-  Copyright 2020 The JetBrains Mono Project Authors
-  (https://github.com/JetBrains/JetBrainsMono)
-  Licensed under the SIL Open Font License, Version 1.1
-  (full text: assets/fonts/OFL.txt, https://scripts.sil.org/OFL)
-
-It is a character subset generated with fonttools' pyftsubset from the upstream
-font and is distributed under the same license. The MIT grant above applies to
-the source code only.
-
-The personal artwork (assets/art.txt, assets/logo/) is (c) professorLee and is
-not covered by either license.
