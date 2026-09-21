@@ -147,7 +147,7 @@ export function finalLines({ data, now }) {
     const { filled, empty } = bar(lg.pct, 40, 16)
     push({ __bar: 1, label: padEnd(lg.name, 13), filled, empty, value: `${lg.pct.toFixed(1)}%`.padStart(6) })
   }
-  if (other > 0) push(S('  '), S(padEnd('other', 13), 'd'), S('░'.repeat(16), 'be'), S(` ${other.toFixed(1)}%`.padStart(7), 'd'))
+  if (other > 0) push(S('  '), S(padEnd('other', 13), 'd'), S('█' === '█' ? '░'.repeat(16) : '', 'be'), S(` ${other.toFixed(1)}%`.padStart(7), 'd'))
   pushKind('blank')
 
   push(...ruleSegs('links'))
@@ -255,9 +255,9 @@ text{font-family:'profLee-Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monos
       const b = r.segs[0]
       let s = `<text class="an" x="${x0}" y="${r.y.toFixed(2)}" style="animation-delay:${delay}s" xml:space="preserve"><tspan class="d">  ${esc(b.label)}</tspan>`
       ;[...b.filled].forEach((_, k) => {
-        s += `<tspan class="bar an" style="animation-delay:${(Math.max(T.barAt, parseFloat(delay)) + k * T.barCharStep).toFixed(2)}s">█</tspan>`
+        s += `<tspan class="bar an" style="font-size:${(F*0.82).toFixed(2)}px;animation-delay:${(Math.max(T.barAt, parseFloat(delay)) + k * T.barCharStep).toFixed(2)}s">█</tspan>`
       })
-      s += `<tspan class="be">${esc(b.empty)}</tspan><tspan class="t"> ${esc(b.value)}</tspan></text>`
+      s += `<tspan class="be" style="font-size:${(F*0.82).toFixed(2)}px">${esc(b.empty)}</tspan><tspan class="t"> ${esc(b.value)}</tspan></text>`
       out.push(s); continue
     }
     const spans = r.segs.map(s => `<tspan class="${s.c}">${esc(s.t)}</tspan>`).join('')
