@@ -33,3 +33,6 @@ Thumbs.db
 # 测试与覆盖率产物
 coverage/
 *.lcov
+
+# 本地构建脚本（不入库：字体子集重建工具，留在工作区自用；来源说明见 LICENSE）
+tools/
