@@ -1,13 +1,35 @@
-# 生成物
+# 忽略：运行时与生成物
+
+# 运行时缓存（GitHub / Open-Meteo 抓取结果）
+.cache/
+
+# 生成的 SVG（--once 的默认输出目录）
 dist/
 *.tmp
 
-# 运行时缓存（数据抓取结果，含时间戳，不入库）
-.cache/
+# 日志
+*.log
+npm-debug.log*
+pnpm-debug.log*
 
 # 依赖
 node_modules/
+.pnpm-store/
 
-# 编辑器/系统
-.DS_Store
+# 环境变量（本地密钥、临时配置）
+.env
+.env.*
+!.env.example
+
+# 编辑器 / 系统
+.idea/
+.vscode/
 *.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# 测试与覆盖率产物
+coverage/
+*.lcov

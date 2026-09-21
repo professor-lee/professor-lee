@@ -39,19 +39,27 @@ if (args.includes('--once')) {
 const PORT = Number(flag('--port', process.env.PORT ?? 8731))
 const HOST = flag('--host', '127.0.0.1')
 
+// 预览页：镜像 README.md 的用法（图片 + 点击跳转），另加明暗与重播开关
+const SITE = 'https://professorlee.work/'
 const PREVIEW = (h) => `<!doctype html><meta charset="utf-8"><title>professorLee terminal.svg 预览</title>
 <style>
- body{margin:0;background:#ECEFF4;color:#2E3440;font:13px ui-monospace,monospace;display:flex;flex-direction:column;align-items:center;gap:10px;padding:16px}
+ body{margin:0;background:#ECEFF4;color:#2E3440;font:13px ui-monospace,SFMono-Regular,Menlo,monospace;display:flex;flex-direction:column;align-items:center;gap:12px;padding:16px}
  body.dark{background:#2E3440;color:#ECEFF4}
- img{box-shadow:0 0 0 1px #8884;image-rendering:auto}
- button{font:inherit;padding:4px 10px;cursor:pointer}
+ .bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center}
+ button,a.btn{font:inherit;padding:4px 10px;cursor:pointer;border:1px solid currentColor;background:transparent;color:inherit;text-decoration:none}
+ .note{opacity:.65;font-size:12px;max-width:560px;text-align:center}
+ .frame{border:1px solid #8883;padding:12px;background:#fff}
+ body.dark .frame{background:#2E3440}
 </style>
-<div>
+<div class="bar">
   <button onclick="document.body.classList.toggle('dark')">light / dark</button>
   <button onclick="document.getElementById('s').src='/readme/terminal.svg?t='+Date.now()">replay（刷新重播）</button>
-  <span id="info">尺寸 ${GEO.W}×${h}</span>
+  <span class="note">尺寸 550&times;${h}</span>
 </div>
-<img id="s" src="/readme/terminal.svg" width="550">`
+<p class="note">下面就是 README 里的用法：整张图可点击 → ${SITE}（链接在外层 markdown，SVG 内部链接在 &lt;img&gt; 中不生效）</p>
+<div class="frame">
+  <a id="link" href="${SITE}"><img id="s" src="/readme/terminal.svg" width="550" alt="professorLee"></a>
+</div>`
 
 createServer(async (req, res) => {
   try {
@@ -67,7 +75,7 @@ createServer(async (req, res) => {
     }
     if (url.pathname === '/' ) {
       const { height } = await build()
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' })
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' })
       res.end(PREVIEW(height)); return
     }
     if (url.pathname === '/healthz') {
