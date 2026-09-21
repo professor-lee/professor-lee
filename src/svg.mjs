@@ -19,13 +19,13 @@ export const GEO = {
   get font() { return this.contentW / (this.COLS * 0.6) },   // 17.9167
   get artPitch() { return 1.0 * this.font },
   get linePitch() { return 1.2 * this.font },
-  get logoPitch() { return 0.9905 * this.font },             // 六点盲文 3 × 0.3302em
+  get logoPitch() { return 1.323 * this.font },              // 16×7 档按显示点宽高比 1.47 预压：3 × 0.30em × 1.47
   hmFont: 12, hmPitch: 9,                                    // 热力图 ■
 }
 
 // ---------- 时间线（秒；不循环）----------
 const T = {
-  logoOutAt: 2.40, logoOutStep: 0.03,   // logo t=0 直接出现；此两项只控制自上而下的逐行擦除
+  logoOutAt: 2.40, logoOutStep: 0.13,   // logo t=0 直接出现；7 行自上而下逐行擦除（2.40→3.31s）
   bootAt: 3.50, bootSteps: [0.10, 0.10, 0.18, 0.28, 0.75],   // 末段含 0.4s 停顿 + 2 行
   bootOutAt: 8.80, bootOutStep: 0.02,
   loginAt: 9.45, loginStep: 0.18, loginOutAt: 10.45, loginOutStep: 0.12,   // login 独占一屏
@@ -122,16 +122,16 @@ export function finalLines({ data, now }) {
   art.forEach(r => R.push({ segs: [S(r)], kind: 'art' }))
 
   push(...boxTopSegs('System'))
-  // 列宽口径（见 doc/终态画面设计.md §4）：标签列 6 / 值列 14 / 列间固定 1 空格；第二组标签列 7
-  push(S('│ ', 'bd'), S(padEnd('OS', 6), 'ka'), S(' '), S(padEnd(MACHINE.os, 14), 't'), S(' '), S(padEnd('WM', 7), 'ka'), S(' '), S(MACHINE.wm, 't'))
-  push(S('│ ', 'bd'), S(padEnd('Shell', 6), 'ka'), S(' '), S(padEnd(MACHINE.shell, 14), 't'), S(' '), S(padEnd('Term', 7), 'ka'), S(' '), S(MACHINE.term, 't'))
-  push(S('│ ', 'bd'), S(padEnd('Editor', 6), 'ka'), S(' '), S(padEnd(MACHINE.editor, 14), 't'), S(' '), S(padEnd('Pkgs', 7), 'ka'), S(' '), S(MACHINE.pkgs, 't'))
-  push(S('│ ', 'bd'), S(padEnd('Theme', 6), 'ka'), S(' '), S(padEnd(MACHINE.theme, 14), 't'), S(' '), S(padEnd('Font', 7), 'ka'), S(' '), S(MACHINE.font, 't'))
+  // 列宽口径（见 doc/终态画面设计.md §4）：标签列 6 / 值列 14 / 列间固定 1 空格；第二组标签列 5
+  push(S('│ ', 'bd'), S(padEnd('OS', 6), 'ka'), S(' '), S(padEnd(MACHINE.os, 14), 't'), S(' '), S(padEnd('WM', 5), 'ka'), S(' '), S(MACHINE.wm, 't'))
+  push(S('│ ', 'bd'), S(padEnd('Shell', 6), 'ka'), S(' '), S(padEnd(MACHINE.shell, 14), 't'), S(' '), S(padEnd('Term', 5), 'ka'), S(' '), S(MACHINE.term, 't'))
+  push(S('│ ', 'bd'), S(padEnd('Editor', 6), 'ka'), S(' '), S(padEnd(MACHINE.editor, 14), 't'), S(' '), S(padEnd('Pkgs', 5), 'ka'), S(' '), S(MACHINE.pkgs, 't'))
+  push(S('│ ', 'bd'), S(padEnd('Theme', 6), 'ka'), S(' '), S(padEnd(MACHINE.theme, 14), 't'), S(' '), S(padEnd('Font', 5), 'ka'), S(' '), S(MACHINE.font, 't'))
   push(...boxBotSegs())
 
   push(...boxTopSegs('About / DateTime'))
-  push(S('│ ', 'bd'), S(padEnd('OS Age', 6), 'kb'), S(' '), S(padEnd(`${ageYears(now)} years`, 14), 't'), S(' '), S(padEnd('Weather', 7), 'kb'), S(' '), S(w ? w.text : '--', 't'))
-  push(S('│ ', 'bd'), S(padEnd('Host', 6), 'kb'), S(' '), S(padEnd('Beijing CN', 14), 't'), S(' '), S(padEnd('Repos', 7), 'kb'), S(' '), S(l ? `${l.repos}/${l.stars} stars` : '--', 't'))
+  push(S('│ ', 'bd'), S(padEnd('OS Age', 6), 'kb'), S(' '), S(padEnd(`${ageYears(now)} years`, 14), 't'), S(' '), S(padEnd('Wx', 5), 'kb'), S(' '), S(w ? w.text : '--', 't'))
+  push(S('│ ', 'bd'), S(padEnd('Host', 6), 'kb'), S(' '), S(padEnd('Beijing CN', 14), 't'), S(' '), S(padEnd('Repos', 5), 'kb'), S(' '), S(l ? `${l.repos}/${l.stars} stars` : '--', 't'))
   push(S('│ ', 'bd'), S(padEnd('Local', 6), 'kb'), S(' '), S(`${ymdhm.slice(11)} (${bucketOf(hour)})`, 't'))
   push(S('│ ', 'bd'), S(padEnd('Commit', 6), 'kb'), S(' '), S(c ? `${c.total} in last 12 months` : '--', 't'))
   push(...boxBotSegs())
@@ -170,7 +170,7 @@ const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 
 export function renderSvg({ data, now = new Date() }) {
   const fontB64 = readFileSync(join(ROOT, 'assets/fonts/profLee-mono.woff2')).toString('base64')
-  const logo = read('assets/logo/logo-48x31.txt').split('\n').filter(l => l.length)
+  const logo = read('assets/logo/logo-16x7.txt').split('\n').filter(l => l.length)
   const boot = bootLines({ data, now })
   const fin = finalLines({ data, now })
 
@@ -220,8 +220,9 @@ text{font-family:'profLee-Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monos
 
   // 1) 开场：盲文 logo（逐行淡入 → 自上而下逐行擦除）
   // 开场 logo：t=0 直接出现（TTY 式），随后自上而下逐行"跳变"擦除
+  const logoX = x0 + (GEO.COLS - (logo[0]?.length ?? 0)) / 2 * 0.6 * F     // 顶部水平居中（按内容列数）
   logo.forEach((row, i) => {
-    out.push(`<text class="lgo acc" x="${x0}" y="${(GEO.PAD + (i + 1) * LOGOP).toFixed(2)}" style="animation-delay:${(T.logoOutAt + i * T.logoOutStep).toFixed(2)}s" xml:space="preserve">${esc(row)}</text>`)
+    out.push(`<text class="lgo acc" x="${logoX.toFixed(1)}" y="${(GEO.PAD + (i + 1) * LOGOP).toFixed(2)}" style="animation-delay:${(T.logoOutAt + i * T.logoOutStep).toFixed(2)}s" xml:space="preserve">${esc(row)}</text>`)
   })
 
   // 2) boot 25 行（结束后整屏清掉；login 另起一页）
