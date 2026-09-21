@@ -36,14 +36,21 @@ const T = {
 
 // ---------- 小工具 ----------
 const padEnd = (s, n) => (s.length >= n ? s : s + ' '.repeat(n - s.length))
-const boxTop = (title) => '┌' + '─'.repeat(9) + ' ' + title + ' ' + '─'.repeat(GEO.COLS - 12 - title.length - 1) + '┐'
-const boxBot = () => '└' + '─'.repeat(GEO.COLS - 2) + '┘'
-function rule(label, tail = '') {
-  const core = `── ${label} `
-  const t = tail ? ` ${tail} ` : ''
-  const dashes = GEO.COLS - core.length - t.length
-  return core + '─'.repeat(Math.max(2, dashes)) + t
+const boxTopSegs = (title) => {
+  const dash = GEO.COLS - 12 - title.length - 1
+  return [S('┌' + '─'.repeat(9) + ' ', 'bd'), S(title, 'd'), S(' ' + '─'.repeat(dash) + '┐', 'bd')]
 }
+const boxBotSegs = () => [S('└' + '─'.repeat(GEO.COLS - 2) + '┘', 'bd')]
+const boxBot = () => '└' + '─'.repeat(GEO.COLS - 2) + '┘'
+function ruleSegs(label, tail = '') {
+  const head = `── ${label} `
+  const t = tail ? ` ${tail} ` : ''
+  const dashes = '─'.repeat(Math.max(2, GEO.COLS - head.length - t.length))
+  const segs = [S(head, 'd'), S(dashes, 'bd')]
+  if (t) segs.push(S(t, 'd'))
+  return segs
+}
+const NORD16 = ['#2E3440','#3B4252','#434C5E','#4C566A','#D8DEE9','#E5E9F0','#ECEFF4','#8FBCBB','#88C0D0','#81A1C1','#5E81AC','#BF616A','#D08770','#EBCB8B','#A3BE8C','#B48EAD']
 function bar(n, max, width = 16) {
   const filled = max > 0 ? Math.round(width * n / max) : 0
   return { filled: '█'.repeat(filled), empty: '░'.repeat(width - filled) }
@@ -103,30 +110,31 @@ export function finalLines({ data, now }) {
   pushKind('prompt')                                   // 第 1 行：提示符（打字机渲染）
   art.forEach(r => R.push({ segs: [S(r)], kind: 'art' }))
 
-  push(S(boxTop('System'), 'bd'))
-  push(S('│ ', 'bd'), S(padEnd('PC', 9), 'ka'), S(padEnd('MACHD-WXX9', 11), 't'), S(padEnd('OS', 9), 'ka'), S('Manjaro x86_64', 't'))
-  push(S('│ ', 'bd'), S(padEnd('CPU', 9), 'ka'), S(padEnd('i7-1165G7', 11), 't'), S(padEnd('Kernel', 9), 'ka'), S('6.12.108', 't'))
-  push(S('│ ', 'bd'), S(padEnd('GPU', 9), 'ka'), S(padEnd('Iris Xe', 11), 't'), S(padEnd('Pkgs', 9), 'ka'), S('2239 pacman', 't'))
-  push(S('│ ', 'bd'), S(padEnd('RAM', 9), 'ka'), S(padEnd('15.42 GiB', 11), 't'), S(padEnd('Shell', 9), 'ka'), S('fish 4.9.1', 't'))
-  push(S('│ ', 'bd'), S(padEnd('Disk', 9), 'ka'), S(padEnd('476 GiB', 11), 't'), S(padEnd('WM', 9), 'ka'), S('niri 26.04', 't'))
-  push(S('│ ', 'bd'), S(padEnd('Term', 9), 'ka'), S(padEnd('kitty 0.48.2', 11), 't'), S(padEnd('Editor', 9), 'ka'), S('nvim / VS Code', 't'))
-  push(S(boxBot(), 'bd'))
+  push(...boxTopSegs('System'))
+  push(S('│ ', 'bd'), S(padEnd('PC', 9), 'ka'), S(padEnd('MACHD-WXX9', 14), 't'), S(padEnd('OS', 9), 'ka'), S('Manjaro x86_64', 't'))
+  push(S('│ ', 'bd'), S(padEnd('CPU', 9), 'ka'), S(padEnd('i7-1165G7', 14), 't'), S(padEnd('Kernel', 9), 'ka'), S('6.12.108', 't'))
+  push(S('│ ', 'bd'), S(padEnd('GPU', 9), 'ka'), S(padEnd('Iris Xe', 14), 't'), S(padEnd('Pkgs', 9), 'ka'), S('2239 pacman', 't'))
+  push(S('│ ', 'bd'), S(padEnd('RAM', 9), 'ka'), S(padEnd('15.42 GiB', 14), 't'), S(padEnd('Shell', 9), 'ka'), S('fish 4.9.1', 't'))
+  push(S('│ ', 'bd'), S(padEnd('Disk', 9), 'ka'), S(padEnd('476 GiB', 14), 't'), S(padEnd('WM', 9), 'ka'), S('niri 26.04', 't'))
+  push(S('│ ', 'bd'), S(padEnd('Term', 9), 'ka'), S(padEnd('kitty 0.48.2', 14), 't'), S(padEnd('Editor', 9), 'ka'), S('nvim / VS Code', 't'))
+  push(...boxBotSegs())
 
-  push(S(boxTop('About / DateTime'), 'bd'))
-  push(S('│ ', 'bd'), S(padEnd('OS Age', 9), 'kb'), S(padEnd(`${ageYears(now)} years`, 11), 't'), S(padEnd('Local', 9), 'kb'), S(`${ymdhm.slice(11)} ${bucketOf(hour)}`, 't'))
-  push(S('│ ', 'bd'), S(padEnd('Host', 9), 'kb'), S(padEnd('Beijing CN', 11), 't'), S(padEnd('Weather', 9), 'kb'), S(w ? w.text : '--', 't'))
-  push(S('│ ', 'bd'), S(padEnd('Repos', 9), 'kb'), S(padEnd(l ? `${l.repos} / ${l.stars} stars` : '--', 11), 't'), S(padEnd('Commits', 9), 'kb'), S(c ? `${c.total} / 12mo` : '--', 't'))
-  push(S(boxBot(), 'bd'))
+  push(...boxTopSegs('About / DateTime'))
+  push(S('│ ', 'bd'), S(padEnd('OS Age', 9), 'kb'), S(padEnd(`${ageYears(now)} years`, 14), 't'), S(padEnd('Weather', 9), 'kb'), S(w ? w.text : '--', 't'))
+  push(S('│ ', 'bd'), S(padEnd('Host', 9), 'kb'), S(padEnd('Beijing CN', 14), 't'), S(padEnd('Repos', 9), 'kb'), S(l ? `${l.repos}/${l.stars} stars` : '--', 't'))
+  push(S('│ ', 'bd'), S(padEnd('Local', 9), 'kb'), S(`${ymdhm.slice(11)} (${bucketOf(hour)})`, 't'))
+  push(S('│ ', 'bd'), S(padEnd('Commits', 9), 'kb'), S(c ? `${c.total} in last 12 months` : '--', 't'))
+  push(...boxBotSegs())
 
   pushKind('dots')                                     // 16 色圆点
   pushKind('blank')
 
-  push(S(rule('contributions', c ? `${c.days.length} d` : ''), 'bd'))
+  push(...ruleSegs('contributions', c ? `${c.days.length} d` : ''))
   pushKind('heat', { weeks: c?.weeks ?? [] })
   pushKind('blank')
 
   const maxB = b ? Math.max(...Object.values(b.counts)) : 0
-  push(S(rule('commit time', 'count'), 'bd'))
+  push(...ruleSegs('commit time', 'count'))
   for (const bk of BUCKETS) {
     const n = b?.counts?.[bk.key] ?? null
     const { filled, empty } = bar(n ?? 0, maxB)
@@ -134,7 +142,7 @@ export function finalLines({ data, now }) {
   }
   pushKind('blank')
 
-  push(S(rule('languages', 'share'), 'bd'))
+  push(...ruleSegs('languages', 'share'))
   for (const lg of langs) {
     const { filled, empty } = bar(lg.pct, 40, 16)
     push({ __bar: 1, label: padEnd(lg.name, 13), filled, empty, value: `${lg.pct.toFixed(1)}%`.padStart(6) })
@@ -142,7 +150,7 @@ export function finalLines({ data, now }) {
   if (other > 0) push(S('  '), S(padEnd('other', 13), 'd'), S('░'.repeat(16), 'be'), S(` ${other.toFixed(1)}%`.padStart(7), 'd'))
   pushKind('blank')
 
-  push(S(rule('links'), 'bd'))
+  push(...ruleSegs('links'))
   for (const lk of LINKS) push(S('  ' + lk, 'acc'))
   return R
 }
@@ -167,7 +175,8 @@ export function renderSvg({ data, now = new Date() }) {
     rows.push({ ...l, y, h })
     y += h
   }
-  const H = Math.ceil(Math.max(y - LP + GEO.PAD, GEO.PAD + boot.length * LP + GEO.PAD, GEO.PAD + logo.length * LOGOP + GEO.PAD))
+  const lastRowBottom = rows[rows.length - 1].y + 2 * LP + 0.35 * F   // 末行 + 底部提示符行
+  const H = Math.ceil(Math.max(lastRowBottom + GEO.PAD, GEO.PAD + boot.length * LP + GEO.PAD, GEO.PAD + logo.length * LOGOP + GEO.PAD))
 
   const out = []
   out.push(`<svg xmlns="http://www.w3.org/2000/svg" width="${GEO.W}" height="${H}" viewBox="0 0 ${GEO.W} ${H}">`)
@@ -176,7 +185,7 @@ export function renderSvg({ data, now = new Date() }) {
 text{font-family:'profLee-Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:${F.toFixed(4)}px}
 .bg{fill:#ECEFF4}.pn{fill:#E5E9F0}.bd{fill:#D8DEE9}.t{fill:#2E3440}.d{fill:#4C566A}.f{fill:#4C566A}
 .acc{fill:#3B4252}.ok{fill:#3B4252}.warn{fill:#D08770}.ka{fill:#3B4252}.kb{fill:#3B4252}
-.bar{fill:#5E81AC}.be{fill:#D8DEE9}.dot{fill:#5E81AC}
+.bar{fill:#5E81AC}.be{fill:#D8DEE9}.sw{stroke:#4C566A;stroke-opacity:.55;stroke-width:.9}
 .h0{fill:#D8DEE9}.h1{fill:#5E81AC;fill-opacity:.30}.h2{fill:#5E81AC;fill-opacity:.55}.h3{fill:#5E81AC;fill-opacity:.78}.h4{fill:#5E81AC}
 @keyframes fin{from{opacity:0}to{opacity:1}}
 @keyframes fout{from{opacity:1}to{opacity:0}}
@@ -186,7 +195,7 @@ text{font-family:'profLee-Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monos
 @media (prefers-color-scheme: dark){
 .bg{fill:#2E3440}.pn{fill:#3B4252}.bd{fill:#434C5E}.t{fill:#ECEFF4}.d{fill:#D8DEE9}.f{fill:#81A1C1}
 .acc{fill:#88C0D0}.ok{fill:#A3BE8C}.warn{fill:#EBCB8B}.ka{fill:#A3BE8C}.kb{fill:#B48EAD}
-.bar{fill:#88C0D0}.be{fill:#434C5E}.dot{fill:#88C0D0}
+.bar{fill:#88C0D0}.be{fill:#434C5E}.sw{stroke:#2E3440;stroke-opacity:.9;stroke-width:.9}
 .h0{fill:#3B4252}.h1{fill:#88C0D0;fill-opacity:.14}.h2{fill:#88C0D0;fill-opacity:.38}.h3{fill:#88C0D0;fill-opacity:.65}.h4{fill:#88C0D0}
 }
 </style>`)
@@ -224,7 +233,7 @@ text{font-family:'profLee-Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monos
       const n = 16, rad = 4, gap = 6, bx = x0 + 3
       let s = ''
       for (let k = 0; k < n; k++) {
-        s += `<circle class="dot an" cx="${bx + k * (2 * rad + gap)}" cy="${(r.y - 5).toFixed(0)}" r="${rad}" fill-opacity="${(0.25 + 0.75 * k / (n - 1)).toFixed(2)}" style="animation-delay:${(T.finalAt + k * 0.02).toFixed(2)}s"/>`
+        s += `<circle class="sw an" cx="${bx + k * (2 * rad + gap)}" cy="${(r.y - 5).toFixed(0)}" r="${rad}" fill="${NORD16[k]}" style="animation-delay:${(T.finalAt + k * 0.02).toFixed(2)}s"/>`
       }
       out.push(s); continue
     }
