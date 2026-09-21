@@ -25,20 +25,23 @@ export const GEO = {
 
 // ---------- 时间线（秒；不循环）----------
 const T = {
-  logoInStep: 0.04, logoOutAt: 2.40, logoOutStep: 0.03,
+  logoOutAt: 2.40, logoOutStep: 0.03,   // logo t=0 直接出现；此两项只控制自上而下的逐行擦除
   bootAt: 3.50, bootSteps: [0.10, 0.10, 0.18, 0.28, 0.75],   // 末段含 0.4s 停顿 + 2 行
-  bootOutAt: 8.90,
-  promptAt: 9.15, typeCps: 0.022,
-  finalAt: 9.70, finalStep: 0.03,
-  heatAt: 10.80, heatColStep: 0.012,
-  barAt: 11.10, barCharStep: 0.02,
+  bootOutAt: 8.80, bootOutStep: 0.02,
+  loginAt: 9.45, loginStep: 0.18, loginOutAt: 10.45, loginOutStep: 0.12,   // login 独占一屏
+  promptAt: 10.70, promptLead: 0.30, typeCps: 0.055, enterPause: 0.35,   // 提示符逐字输入 → 停顿 → 回车
+  // 终态**逐行串行**：任一行的动画结束后，下一行才开始（见 doc/终态画面设计.md §6）
+  rowDwell: 0.06, artDwell: 0.09, blankDwell: 0.05,       // 纯文本行 / ASCII art 行 / 空行
+  dotStep: 0.022,                                          // 16 色圆点：逐颗
+  heatCellStep: 0.0028,                                    // 热力图：逐格（行主序，像终端一行行打点）
+  barCharStep: 0.016, barRowDwell: 0.05,                   // 进度条：逐格生长，条之间串行
 }
 
 // ---------- 小工具 ----------
 const padEnd = (s, n) => (s.length >= n ? s : s + ' '.repeat(n - s.length))
 const boxTopSegs = (title) => {
-  const dash = GEO.COLS - 12 - title.length - 1
-  return [S('┌' + '─'.repeat(9) + ' ', 'bd'), S(title, 'd'), S(' ' + '─'.repeat(dash) + '┐', 'bd')]
+  const dash = GEO.COLS - 3 - title.length          // ┌ + title + ' ' + dashes + ┐ = COLS
+  return [S('┌', 'bd'), S(title, 'd'), S(' ' + '─'.repeat(dash) + '┐', 'bd')]
 }
 const boxBotSegs = () => [S('└' + '─'.repeat(GEO.COLS - 2) + '┘', 'bd')]
 const boxBot = () => '└' + '─'.repeat(GEO.COLS - 2) + '┘'
@@ -56,6 +59,7 @@ function bar(n, max, width = 16) {
   return { filled: '█'.repeat(filled), empty: '░'.repeat(width - filled) }
 }
 const S = (t, c = 't') => ({ t, c })
+const PROMPT = '[professorLee@github ~]$ '
 
 // ---------- 内容：boot 27 行 ----------
 export function bootLines({ data, now }) {
@@ -66,10 +70,10 @@ export function bootLines({ data, now }) {
   const plain = (ts, msg) => ({ segs: [S(`[${ts}] `, 'f'), S(msg)] })
 
   L.push({ segs: [S(`professorLee.os 1.0.0 (build ${MACHINE.build})`, 'acc')] })
-  L.push(plain('    0.000000', `Linux version ${MACHINE.kernel}`))
-  L.push(plain('    0.000412', `Host: ${MACHINE.pc.split(' ')[0]}, Beijing (UTC+8)`))
+  L.push(plain('    0.000000', `Linux (${MACHINE.os.split(' ')[0]})`))
+  L.push(plain('    0.000412', `Host: ${MACHINE.host}`))
   L.push(plain('    0.001204', `WM: ${MACHINE.wm}`))
-  L.push(plain('    0.001806', `Term: ${MACHINE.term} / ${MACHINE.shell}`))
+  L.push(plain('    0.001806', `Term: ${MACHINE.term} / ${MACHINE.shell.split(' ')[0]}`))
   L.push(plain('    0.002410', `Identity: ${MACHINE.identity}`))
   L.push(ok('    0.002880', 'Mount /dev/creativity'))
   L.push(ok('    0.004120', 'Mount /photos (ro)'))
@@ -90,9 +94,16 @@ export function bootLines({ data, now }) {
   if (data.lang) L.push(plain('    0.047900', `Languages: ${data.lang.langs.slice(0, 4).map(x => x.name).join(' ')}`))
   if (late) L.push({ segs: [S('[    0.050210] ', 'f'), S(padEnd(`Late-night build: ${ymdhm.slice(11)}`, 20)), S('[ WARN ]', 'warn')] })
   L.push(plain('    0.052100', `All 18 units started in 0.052s`))
-  L.push({ segs: [S('professorLee login: professorLee (auto)', 'acc')] })
-  L.push({ segs: [S(`Last login: ${date} ${time} CST`, 'd')] })
   return L
+}
+
+// ---------- 内容：login 页（单独一页：boot 清屏后出现，进终态前再清屏）----------
+export function loginLines({ now }) {
+  const { date, time } = localParts(now)
+  return [
+    { segs: [S('professorLee login: professorLee (auto)', 'acc')] },
+    { segs: [S(`Last login: ${date} ${time} CST`, 'd')] },
+  ]
 }
 
 // ---------- 内容：终态 ----------
@@ -111,19 +122,18 @@ export function finalLines({ data, now }) {
   art.forEach(r => R.push({ segs: [S(r)], kind: 'art' }))
 
   push(...boxTopSegs('System'))
-  push(S('│ ', 'bd'), S(padEnd('PC', 9), 'ka'), S(padEnd('MACHD-WXX9', 14), 't'), S(padEnd('OS', 9), 'ka'), S('Manjaro x86_64', 't'))
-  push(S('│ ', 'bd'), S(padEnd('CPU', 9), 'ka'), S(padEnd('i7-1165G7', 14), 't'), S(padEnd('Kernel', 9), 'ka'), S('6.12.108', 't'))
-  push(S('│ ', 'bd'), S(padEnd('GPU', 9), 'ka'), S(padEnd('Iris Xe', 14), 't'), S(padEnd('Pkgs', 9), 'ka'), S('2239 pacman', 't'))
-  push(S('│ ', 'bd'), S(padEnd('RAM', 9), 'ka'), S(padEnd('15.42 GiB', 14), 't'), S(padEnd('Shell', 9), 'ka'), S('fish 4.9.1', 't'))
-  push(S('│ ', 'bd'), S(padEnd('Disk', 9), 'ka'), S(padEnd('476 GiB', 14), 't'), S(padEnd('WM', 9), 'ka'), S('niri 26.04', 't'))
-  push(S('│ ', 'bd'), S(padEnd('Term', 9), 'ka'), S(padEnd('kitty 0.48.2', 14), 't'), S(padEnd('Editor', 9), 'ka'), S('nvim / VS Code', 't'))
+  // 列宽口径（见 doc/终态画面设计.md §4）：标签列 6 / 值列 14 / 列间固定 1 空格；第二组标签列 7
+  push(S('│ ', 'bd'), S(padEnd('OS', 6), 'ka'), S(' '), S(padEnd(MACHINE.os, 14), 't'), S(' '), S(padEnd('WM', 7), 'ka'), S(' '), S(MACHINE.wm, 't'))
+  push(S('│ ', 'bd'), S(padEnd('Shell', 6), 'ka'), S(' '), S(padEnd(MACHINE.shell, 14), 't'), S(' '), S(padEnd('Term', 7), 'ka'), S(' '), S(MACHINE.term, 't'))
+  push(S('│ ', 'bd'), S(padEnd('Editor', 6), 'ka'), S(' '), S(padEnd(MACHINE.editor, 14), 't'), S(' '), S(padEnd('Pkgs', 7), 'ka'), S(' '), S(MACHINE.pkgs, 't'))
+  push(S('│ ', 'bd'), S(padEnd('Theme', 6), 'ka'), S(' '), S(padEnd(MACHINE.theme, 14), 't'), S(' '), S(padEnd('Font', 7), 'ka'), S(' '), S(MACHINE.font, 't'))
   push(...boxBotSegs())
 
   push(...boxTopSegs('About / DateTime'))
-  push(S('│ ', 'bd'), S(padEnd('OS Age', 9), 'kb'), S(padEnd(`${ageYears(now)} years`, 14), 't'), S(padEnd('Weather', 9), 'kb'), S(w ? w.text : '--', 't'))
-  push(S('│ ', 'bd'), S(padEnd('Host', 9), 'kb'), S(padEnd('Beijing CN', 14), 't'), S(padEnd('Repos', 9), 'kb'), S(l ? `${l.repos}/${l.stars} stars` : '--', 't'))
-  push(S('│ ', 'bd'), S(padEnd('Local', 9), 'kb'), S(`${ymdhm.slice(11)} (${bucketOf(hour)})`, 't'))
-  push(S('│ ', 'bd'), S(padEnd('Commits', 9), 'kb'), S(c ? `${c.total} in last 12 months` : '--', 't'))
+  push(S('│ ', 'bd'), S(padEnd('OS Age', 6), 'kb'), S(' '), S(padEnd(`${ageYears(now)} years`, 14), 't'), S(' '), S(padEnd('Weather', 7), 'kb'), S(' '), S(w ? w.text : '--', 't'))
+  push(S('│ ', 'bd'), S(padEnd('Host', 6), 'kb'), S(' '), S(padEnd('Beijing CN', 14), 't'), S(' '), S(padEnd('Repos', 7), 'kb'), S(' '), S(l ? `${l.repos}/${l.stars} stars` : '--', 't'))
+  push(S('│ ', 'bd'), S(padEnd('Local', 6), 'kb'), S(' '), S(`${ymdhm.slice(11)} (${bucketOf(hour)})`, 't'))
+  push(S('│ ', 'bd'), S(padEnd('Commit', 6), 'kb'), S(' '), S(c ? `${c.total} in last 12 months` : '--', 't'))
   push(...boxBotSegs())
 
   pushKind('dots')                                     // 16 色圆点
@@ -147,7 +157,7 @@ export function finalLines({ data, now }) {
     const { filled, empty } = bar(lg.pct, 40, 16)
     push({ __bar: 1, label: padEnd(lg.name, 13), filled, empty, value: `${lg.pct.toFixed(1)}%`.padStart(6) })
   }
-  if (other > 0) push(S('  '), S(padEnd('other', 13), 'd'), S('█' === '█' ? '░'.repeat(16) : '', 'be'), S(` ${other.toFixed(1)}%`.padStart(7), 'd'))
+  if (other > 0) push({ __bar: 1, label: padEnd('other', 13), filled: '', empty: '░'.repeat(16), value: `${other.toFixed(1)}%`.padStart(6) })
   pushKind('blank')
 
   push(...ruleSegs('links'))
@@ -190,9 +200,13 @@ text{font-family:'profLee-Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monos
 @keyframes fin{from{opacity:0}to{opacity:1}}
 @keyframes fout{from{opacity:1}to{opacity:0}}
 @keyframes blk{0%,49%{opacity:1}50%,100%{opacity:0}}
-.an{animation:fin .22s linear both}
-.lg{animation:fin .20s linear both,fout .18s linear forwards}
-/* 注意：fout 必须是 forwards 而非 both —— both 会在其延迟开始前就回填 from(opacity:1)，
+.an{animation:fin 1ms step-start both}
+.bo{animation:fin 1ms step-start both,fout 1ms step-start forwards}
+.lgo{animation:fout 1ms step-start forwards}
+/* 注意：所有出现/消失均为 1ms step-start（真实 TTY 跳变，不做渐隐）
+   注意：必须 step-start 而非 step-end —— step-end 下动画 fill 取的是区间起始值，
+   表现是 fout 跑到 finished 后元素仍然可见（实测）；
+   fout 必须是 forwards 而非 both —— both 会在其延迟开始前就回填 from(opacity:1)，
    把入场动画整个盖掉（实测表现：boot 行从 t=0 就可见、压在开场 logo 上） */
 @media (prefers-color-scheme: dark){
 .bg{fill:#2E3440}.pn{fill:#3B4252}.bd{fill:#434C5E}.t{fill:#ECEFF4}.d{fill:#D8DEE9}.f{fill:#81A1C1}
@@ -205,71 +219,106 @@ text{font-family:'profLee-Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monos
   out.push(`<rect class="pn" x="${GEO.PAD}" y="${GEO.PAD}" width="${GEO.contentW + 2}" height="${H - 2 * GEO.PAD}"/>`)
 
   // 1) 开场：盲文 logo（逐行淡入 → 自上而下逐行擦除）
+  // 开场 logo：t=0 直接出现（TTY 式），随后自上而下逐行"跳变"擦除
   logo.forEach((row, i) => {
-    out.push(`<text class="lg acc" x="${x0}" y="${(GEO.PAD + (i + 1) * LOGOP).toFixed(2)}" style="animation-delay:${(i * T.logoInStep).toFixed(2)}s,${(T.logoOutAt + i * T.logoOutStep).toFixed(2)}s" xml:space="preserve">${esc(row)}</text>`)
+    out.push(`<text class="lgo acc" x="${x0}" y="${(GEO.PAD + (i + 1) * LOGOP).toFixed(2)}" style="animation-delay:${(T.logoOutAt + i * T.logoOutStep).toFixed(2)}s" xml:space="preserve">${esc(row)}</text>`)
   })
 
-  // 2) boot 27 行（结束后整块淡出）
+  // 2) boot 25 行（结束后整屏清掉；login 另起一页）
   let at = T.bootAt
   boot.forEach((l, i) => {
-    at += i < 6 ? T.bootSteps[0] : i < 13 ? T.bootSteps[1] : i < 19 ? T.bootSteps[2] : i < 25 ? T.bootSteps[3] : T.bootSteps[4]
+    at += i < 6 ? T.bootSteps[0] : i < 13 ? T.bootSteps[1] : i < 19 ? T.bootSteps[2] : i < 24 ? T.bootSteps[3] : T.bootSteps[4]
     const spans = l.segs.map(s => `<tspan class="${s.c}">${esc(s.t)}</tspan>`).join('')
-    out.push(`<text class="lg" x="${x0}" y="${(GEO.PAD + (i + 1) * LP).toFixed(2)}" style="animation-delay:${at.toFixed(2)}s,${T.bootOutAt.toFixed(2)}s" xml:space="preserve">${spans}</text>`)
+    out.push(`<text class="bo" x="${x0}" y="${(GEO.PAD + (i + 1) * LP).toFixed(2)}" style="animation-delay:${at.toFixed(2)}s,${(T.bootOutAt + i * T.bootOutStep).toFixed(2)}s" xml:space="preserve">${spans}</text>`)
   })
 
-  // 3) 终态
+  // 2b) login 页：清屏后只在顶部显示两行（新会话的"新一屏"）
+  loginLines({ now }).forEach((l, i) => {
+    const spans = l.segs.map(s => `<tspan class="${s.c}">${esc(s.t)}</tspan>`).join('')
+    out.push(`<text class="bo" x="${x0}" y="${(GEO.PAD + (i + 1) * LP).toFixed(2)}" style="animation-delay:${(T.loginAt + i * T.loginStep).toFixed(2)}s,${(T.loginOutAt + i * T.loginOutStep).toFixed(2)}s" xml:space="preserve">${spans}</text>`)
+  })
+
+  // 3) 终态：提示符输入完（回车）之后**逐行串行**输出
+  const TYPED = 'fastfetch'                               // 仅这段有打字效果（提示符立即出现）
+  const typeStart = T.promptAt + T.promptLead
+  const enterAt = typeStart + TYPED.length * T.typeCps + T.enterPause
+  const tFinalAt = enterAt + 0.10
+  let tc = tFinalAt                                   // 串行游标：下一行的起始时刻 = 上一行动画结束时刻
   for (const r of rows) {
-    const delay = (T.finalAt + rows.indexOf(r) * T.finalStep).toFixed(2)
+    const bar = r.segs[0]?.__bar ? r.segs[0] : null
+    const delay = tc
+    tc += r.kind === 'prompt' ? 0                        // 提示符在 tFinalAt 之前就打完了
+        : r.kind === 'dots' ? 16 * T.dotStep
+        : r.kind === 'heat' ? r.weeks.length * 7 * T.heatCellStep
+        : bar ? bar.filled.length * T.barCharStep + T.barRowDwell
+        : r.kind === 'art' ? T.artDwell
+        : r.kind === 'blank' ? T.blankDwell
+        : T.rowDwell
+    const at = (t) => (delay + t).toFixed(2)
+
     if (r.kind === 'prompt') {
-      const prompt = '[professorLee@github ~]$ fastfetch'
-      const spans = [...prompt].map((ch, i) => `<tspan class="an t" style="animation-delay:${(T.promptAt + i * T.typeCps).toFixed(3)}s">${esc(ch)}</tspan>`).join('')
-      out.push(`<text x="${x0}" y="${r.y.toFixed(2)}" xml:space="preserve">${spans}</text>`)
+      // 提示符**立即出现**（不打字），只有 fastfetch 逐字输入
+      out.push(`<text class="an t" x="${x0}" y="${r.y.toFixed(2)}" style="animation-delay:${T.promptAt.toFixed(2)}s" xml:space="preserve">${esc(PROMPT)}</text>`)
+      const base = x0 + PROMPT.length * 0.6 * F          // 打字起点：紧接提示符之后
+      const spans = [...TYPED].map((ch, i) => `<tspan class="an t" style="animation-delay:${(typeStart + i * T.typeCps).toFixed(3)}s">${esc(ch)}</tspan>`).join('')
+      out.push(`<text x="${base.toFixed(1)}" y="${r.y.toFixed(2)}" xml:space="preserve">${spans}</text>`)
+      // 打字光标：实心方块停在"下一格"逐字推进；回车瞬间消失（不闪烁——保持全图唯一无限动画）
+      const cw = (0.6 * F).toFixed(1), chh = (F * 0.92).toFixed(1), cyy = (r.y - F * 0.8).toFixed(1)
+      let cur = ''
+      for (let k = 0; k <= TYPED.length; k++) {
+        const from = k === 0 ? T.promptAt : typeStart + (k - 1) * T.typeCps
+        const to = k === TYPED.length ? enterAt : typeStart + k * T.typeCps
+        cur += `<rect class="acc" x="${(base + k * 0.6 * F).toFixed(1)}" y="${cyy}" width="${cw}" height="${chh}" style="animation:fin 1ms step-start ${from.toFixed(3)}s both,fout 1ms step-start ${to.toFixed(3)}s forwards"/>`
+      }
+      out.push(cur)
       continue
     }
     if (r.kind === 'blank') continue
     if (r.kind === 'art') {
-      out.push(`<text class="an t" x="${x0}" y="${r.y.toFixed(2)}" style="animation-delay:${delay}s" xml:space="preserve">${esc(r.segs[0].t)}</text>`)
+      out.push(`<text class="an t" x="${x0}" y="${r.y.toFixed(2)}" style="animation-delay:${at(0)}s" xml:space="preserve">${esc(r.segs[0].t)}</text>`)
       continue
     }
     if (r.kind === 'dots') {
-      const n = 16, rad = 4, gap = 6, bx = x0 + 3
+      const n = 16, rad = 4, gap = 6, bx = x0 + 3 + 0.6 * F   // 起始位置：+3px 视觉补偿，再右移一个字符
       let s = ''
       for (let k = 0; k < n; k++) {
-        s += `<circle class="sw an" cx="${bx + k * (2 * rad + gap)}" cy="${(r.y - 5).toFixed(0)}" r="${rad}" fill="${NORD16[k]}" style="animation-delay:${(T.finalAt + k * 0.02).toFixed(2)}s"/>`
+        s += `<circle class="sw an" cx="${bx + k * (2 * rad + gap)}" cy="${(r.y - 5).toFixed(0)}" r="${rad}" fill="${NORD16[k]}" style="animation-delay:${at(k * T.dotStep)}s"/>`
       }
       out.push(s); continue
     }
     if (r.kind === 'heat') {
       const lv = levels(r.weeks.flat())
+      const nw = r.weeks.length
+      const gw = (nw - 1) * GEO.hmPitch + 0.6 * GEO.hmFont        // 网格实际宽度（末列按字宽计）
+      const gx = x0 + (GEO.contentW - gw) / 2                     // 在内容宽度内水平居中
       let s = ''
-      for (let wk = 0; wk < r.weeks.length; wk++) {
+      for (let wk = 0; wk < nw; wk++) {
         for (let dy = 0; dy < 7; dy++) {
           const v = r.weeks[wk][dy] ?? 0
           const k = v === 0 ? 0 : Math.max(1, lv(v))
-          s += `<text class="h${k} an" x="${(x0 + 2 + wk * GEO.hmPitch).toFixed(1)}" y="${(r.y + dy * GEO.hmPitch).toFixed(1)}" style="animation-delay:${(T.heatAt + wk * T.heatColStep).toFixed(2)}s;font-size:${GEO.hmFont}px" xml:space="preserve">■</text>`
+          s += `<text class="h${k} an" x="${(gx + wk * GEO.hmPitch).toFixed(1)}" y="${(r.y + dy * GEO.hmPitch).toFixed(1)}" style="animation-delay:${at((dy * nw + wk) * T.heatCellStep)}s;font-size:${GEO.hmFont}px" xml:space="preserve">■</text>`
         }
       }
       out.push(s); continue
     }
-    if (r.segs[0]?.__bar) {           // 字符进度条（逐格生长）
-      const b = r.segs[0]
-      let s = `<text class="an" x="${x0}" y="${r.y.toFixed(2)}" style="animation-delay:${delay}s" xml:space="preserve"><tspan class="d">  ${esc(b.label)}</tspan>`
-      ;[...b.filled].forEach((_, k) => {
-        s += `<tspan class="bar an" style="font-size:${(F*0.82).toFixed(2)}px;animation-delay:${(Math.max(T.barAt, parseFloat(delay)) + k * T.barCharStep).toFixed(2)}s">█</tspan>`
+    if (bar) {                        // 字符进度条（逐格生长；条与条之间串行）
+      let s = `<text class="an" x="${x0}" y="${r.y.toFixed(2)}" style="animation-delay:${at(0)}s" xml:space="preserve"><tspan class="d">  ${esc(bar.label)}</tspan>`
+      ;[...bar.filled].forEach((_, k) => {
+        s += `<tspan class="bar an" style="font-size:${(F*0.82).toFixed(2)}px;animation-delay:${at(k * T.barCharStep)}s">█</tspan>`
       })
-      s += `<tspan class="be" style="font-size:${(F*0.82).toFixed(2)}px">${esc(b.empty)}</tspan><tspan class="t"> ${esc(b.value)}</tspan></text>`
+      s += `<tspan class="be" style="font-size:${(F*0.82).toFixed(2)}px">${esc(bar.empty)}</tspan><tspan class="t"> ${esc(bar.value)}</tspan></text>`
       out.push(s); continue
     }
     const spans = r.segs.map(s => `<tspan class="${s.c}">${esc(s.t)}</tspan>`).join('')
-    out.push(`<text class="an" x="${x0}" y="${r.y.toFixed(2)}" style="animation-delay:${delay}s" xml:space="preserve">${spans}</text>`)
+    out.push(`<text class="an" x="${x0}" y="${r.y.toFixed(2)}" style="animation-delay:${at(0)}s" xml:space="preserve">${spans}</text>`)
   }
 
-  // 4) 结束后静止的提示符 + 闪烁光标（唯一保留的无限动画）
+  // 4) 结束后静止的提示符 + 闪烁光标（唯一保留的无限动画）；时间取串行游标终点
   const last = rows[rows.length - 1]
   const cy = last.y + LP
-  const cx = x0 + 23 * 0.6 * F
-  out.push(`<text class="an acc" x="${x0}" y="${cy.toFixed(2)}" style="animation-delay:${(T.finalAt + rows.length * T.finalStep + 0.25).toFixed(2)}s" xml:space="preserve">[professorLee@github ~]$ </text>`)
-  out.push(`<g class="an" style="animation-delay:${(T.finalAt + rows.length * T.finalStep + 0.4).toFixed(2)}s"><rect class="acc" x="${cx.toFixed(1)}" y="${(cy - F * 0.8).toFixed(1)}" width="${(0.6 * F).toFixed(1)}" height="${(F * 0.92).toFixed(1)}" style="animation:blk .8s step-end 0s infinite"/></g>`)
+  const cx = x0 + PROMPT.length * 0.6 * F        // 提示符实际列数（勿硬编码：写错会与 $ 重叠）
+  out.push(`<text class="an acc" x="${x0}" y="${cy.toFixed(2)}" style="animation-delay:${(tc + 0.25).toFixed(2)}s" xml:space="preserve">${esc(PROMPT)}</text>`)
+  out.push(`<g class="an" style="animation-delay:${(tc + 0.4).toFixed(2)}s"><rect class="acc" x="${cx.toFixed(1)}" y="${(cy - F * 0.8).toFixed(1)}" width="${(0.6 * F).toFixed(1)}" height="${(F * 0.92).toFixed(1)}" style="animation:blk .8s step-end 0s infinite"/></g>`)
   out.push(`</svg>`)
   return out.join('\n')
 }

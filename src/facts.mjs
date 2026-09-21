@@ -9,26 +9,22 @@ import { fileURLToPath } from 'node:url'
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const CACHE = join(ROOT, '.cache', 'data.json')
 
-// ---------- 真机事实（本机实测，2026-09-21；见 doc/终态画面设计.md §4）----------
+// ---------- 真机事实（脱敏：不含机型/CPU/GPU/内存/磁盘，也不含任何版本号）----------
+// 见 doc/终态画面设计.md §4：只保留不具标识性的系统级事实。
 export const MACHINE = {
-  pc: 'MACHD-WXX9 (M1070)',   // DMI product_name (+ board_name)
-  cpu: 'i7-1165G7 (8) @ 4.70GHz',
-  gpu: 'Intel Iris Xe [Integrated]',
-  ram: '15.42 GiB',
-  disk: '476.64 GiB (btrfs)',
-  os: 'Manjaro Linux x86_64',
-  kernel: '6.12.108-1-MANJARO',
-  pkgs: '1 (appimage), 2239 (pacman)',
-  shell: 'fish 4.9.1',
-  lm: 'SDDM 0.21.0',
-  wm: 'niri 26.04 (Wayland)',
-  term: 'kitty 0.48.2',
-  editor: 'nvim 0.12.5 / VS Code 1.137.0',
+  os: 'Manjaro x86_64',
+  pkgs: '2239 (pacman)',
+  shell: 'fish (login)',          // 登录 shell（不是 $SHELL 的 bash）
+  wm: 'niri (Wayland)',
+  term: 'kitty',
+  editor: 'nvim / VS Code',
+  theme: 'Nord',
+  font: 'JetBrains Mono',
   identity: 'full-stack / UI-UX',
   host: 'Beijing, CN (UTC+8)',
   tz: 'Asia/Shanghai',
-  build: '2005.11',        // 生日月 → 构建号（用户定）
-  birthYM: [2005, 11],     // 用于 OS Age = 真实年龄
+  build: '2005.11',               // 生日月 → 构建号（用户定）
+  birthYM: [2005, 11],            // 用于 OS Age = 真实年龄
   profile: 'professor-lee',
   website: 'https://professorlee.work/',
 }
