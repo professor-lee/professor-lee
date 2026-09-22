@@ -153,7 +153,10 @@ export function finalLines({ data, now }) {
   push(S('│ ', 'bd'), S(padEnd('OS', 6), 'ka'), S(' '), S(padEnd(MACHINE.os, 14), 't'), S(' '), S(padEnd('WM', 5), 'ka'), S(' '), S(MACHINE.wm, 't'))
   push(S('│ ', 'bd'), S(padEnd('Shell', 6), 'ka'), S(' '), S(padEnd(MACHINE.shell, 14), 't'), S(' '), S(padEnd('Term', 5), 'ka'), S(' '), S(MACHINE.term, 't'))
   push(S('│ ', 'bd'), S(padEnd('Editor', 6), 'ka'), S(' '), S(padEnd(MACHINE.editor, 14), 't'), S(' '), S(padEnd('Pkgs', 5), 'ka'), S(' '), S(MACHINE.pkgs, 't'))
-  push(S('│ ', 'bd'), S(padEnd('Theme', 6), 'ka'), S(' '), S(padEnd(MACHINE.theme, 14), 't'), S(' '), S(padEnd('Font', 5), 'ka'), S(' '), S(MACHINE.font, 't'))
+  push(S('│ ', 'bd'), S(padEnd('Theme', 6), 'ka'), S(' '),
+    // Theme 按 prefers-color-scheme 二选一：两版文本互斥显示（display:none 不进布局，故各自垫到 14 列保持 Font 列对齐）
+    S(padEnd(MACHINE.themeLight, 14), 't ol'), S(padEnd(MACHINE.themeDark, 14), 't od'),
+    S(' '), S(padEnd('Font', 5), 'ka'), S(' '), S(MACHINE.font, 't'))
   push(...boxBotSegs())
 
   push(...boxTopSegs('About / DateTime'))
@@ -228,6 +231,7 @@ text{font-family:'profLee-Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monos
 .pn{fill:#E5E9F0}.bd{fill:#D8DEE9}/* light：值=nord0 / 次要=nord3；下面 acc/ok/warn/ka/kb 按色相分工（镜像 dark 的角色），
    取「Nord 色相压暗到 ≥4.5:1」——亮色原始 Frost/Aurora 在浅底上不达标（nord10 仅 3.3:1） */
 .t{fill:#2E3440}.d{fill:#4C566A}.f{fill:#4C566A}
+.ol{display:inline}.od{display:none}
 .acc{fill:#2E6B78}.ok{fill:#47703A}.warn{fill:#7A5F14}.ka{fill:#47703A}.kb{fill:#7E527E}
 .bar{fill:#5E81AC}.lnk{fill:#5E81AC}.be{fill:#4C566A;fill-opacity:.32}.sw{stroke:#4C566A;stroke-opacity:.55;stroke-width:.9}
 ${STACK.map(([, c1], i) => `.s${i + 1}{fill:${c1}}`).join('')}
@@ -245,8 +249,10 @@ ${STACK.map(([, c1], i) => `.s${i + 1}{fill:${c1}}`).join('')}
    把入场动画整个盖掉（实测表现：boot 行从 t=0 就可见、压在开场 logo 上） */
 @media (prefers-color-scheme: dark){
 .pn{fill:#3B4252}.bd{fill:#434C5E}.t{fill:#ECEFF4}.d{fill:#D8DEE9}.f{fill:#81A1C1}
-.acc{fill:#DAA18F}.ok{fill:#A3BE8C}.warn{fill:#EBCB8B}.ka{fill:#A3BE8C}.kb{fill:#B48EAD}
-.bar{fill:#88C0D0}.lnk{fill:#88C0D0}.be{fill:#434C5E}   /* 暗色：.acc 提亮 nord12 橙 #DAA18F(4.54:1) 与 links/bar 的青 #88C0D0(5.03:1) 明确区分 */.sw{stroke:#2E3440;stroke-opacity:.9;stroke-width:.9}
+.ol{display:none}.od{display:inline}
+.acc{fill:#8FBCBB}.ok{fill:#A3BE8C}.warn{fill:#EBCB8B}.ka{fill:#A3BE8C}.kb{fill:#B48EAD}
+.bar{fill:#88C0D0}.lnk{fill:#88C0D0}.be{fill:#434C5E}   /* 暗色：.acc = 官方 nord7 #8FBCBB（4.83:1）；links/bar = 官方 nord8 #88C0D0（5.03:1）——两者是暗面板上仅有的、
+   既未被其它角色占用又过 4.5:1 的官方色（nord12 3.54 / nord11 2.46 / nord15 3.55 不足，nord5 与值色 nord6 近似）*/.sw{stroke:#2E3440;stroke-opacity:.9;stroke-width:.9}
 ${STACK.map(([, , c2], i) => `.s${i + 1}{fill:${c2}}`).join('')}
 .h0{fill:#4C566A;fill-opacity:.55}.h1{fill:#88C0D0;fill-opacity:.22}.h2{fill:#88C0D0;fill-opacity:.38}.h3{fill:#88C0D0;fill-opacity:.65}.h4{fill:#88C0D0}
 }
