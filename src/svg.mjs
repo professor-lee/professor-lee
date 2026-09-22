@@ -197,8 +197,10 @@ export function renderSvg({ data, now = new Date() }) {
   out.push(`<style>
 @font-face{font-family:'profLee-Mono';font-style:normal;font-weight:400;src:url(data:font/woff2;base64,${fontB64}) format('woff2')}
 text{font-family:'profLee-Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:${F.toFixed(4)}px}
-.pn{fill:#E5E9F0}.bd{fill:#D8DEE9}.t{fill:#2E3440}.d{fill:#4C566A}.f{fill:#4C566A}
-.acc{fill:#3B4252}.ok{fill:#3B4252}.warn{fill:#D08770}.ka{fill:#3B4252}.kb{fill:#3B4252}
+.pn{fill:#E5E9F0}.bd{fill:#D8DEE9}/* light：值=nord0 / 次要=nord3；下面 acc/ok/warn/ka/kb 按色相分工（镜像 dark 的角色），
+   取「Nord 色相压暗到 ≥4.5:1」——亮色原始 Frost/Aurora 在浅底上不达标（nord10 仅 3.3:1） */
+.t{fill:#2E3440}.d{fill:#4C566A}.f{fill:#4C566A}
+.acc{fill:#2E6B78}.ok{fill:#47703A}.warn{fill:#7A5F14}.ka{fill:#47703A}.kb{fill:#7E527E}
 .bar{fill:#5E81AC}.be{fill:#4C566A;fill-opacity:.32}.sw{stroke:#4C566A;stroke-opacity:.55;stroke-width:.9}
 .h0{fill:#4C566A;fill-opacity:.20}.h1{fill:#5E81AC;fill-opacity:.42}.h2{fill:#5E81AC;fill-opacity:.55}.h3{fill:#5E81AC;fill-opacity:.78}.h4{fill:#5E81AC}
 @keyframes fin{from{opacity:0}to{opacity:1}}
