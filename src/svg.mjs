@@ -14,7 +14,9 @@ const read = (p) => readFileSync(join(ROOT, p), 'utf8')
 
 // ---------- 几何 ----------
 // 技术栈（用户 2026-09-22 指定，顺序照给；与 GitHub 语言占比块是两件事）
-const STACK = ['Python', 'Rust', 'Java', 'Kotlin', 'Vue', 'Node.js']
+// 技术栈图标（Nerd Font Devicons；字体为 Mono 变体 → 图标单宽 0.6em，与等宽网格对齐）
+// dev-python E73C / dev-rust E7A8 / dev-java E738 / dev-kotlin E81B / dev-vuejs E8DC / dev-nodejs E719
+const STACK = ['\uE73C', '\uE7A8', '\uE738', '\uE81B', '\uE8DC', '\uE719']
 
 export const GEO = {
   W: 550, PAD: 16, COLS: 48,
