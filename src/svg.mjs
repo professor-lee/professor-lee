@@ -14,9 +14,26 @@ const read = (p) => readFileSync(join(ROOT, p), 'utf8')
 
 // ---------- 几何 ----------
 // 技术栈（用户 2026-09-22 指定，顺序照给；与 GitHub 语言占比块是两件事）
-// 技术栈图标（Nerd Font Devicons；字体为 Mono 变体 → 图标单宽 0.6em，与等宽网格对齐）
-// dev-python E73C / dev-rust E7A8 / dev-java E738 / dev-kotlin E81B / dev-vuejs E8DC / dev-nodejs E719
-const STACK = ['\uE73C', '\uE7A8', '\uE738', '\uE81B', '\uE8DC', '\uE719']
+// 技术栈图标（Nerd Font Devicons，单宽 0.6em）：[字符, 亮色版, 暗色版]
+// 品牌色为各技术官方色；亮/暗两套均按 WCAG 图形阈值 3:1 于对应面板底色上校验（见 doc/终态画面设计.md §4b）
+const STACK = [
+  ['\uE73C', '#3775AA', '#5F91BC'],
+  ['\uE7A8', '#A67C63', '#DEA584'],
+  ['\uE738', '#D56600', '#E76F00'],
+  ['\uE81B', '#7E52FE', '#9975FF'],
+  ['\uE8DC', '#36966B', '#42B883'],
+  ['\uE719', '#339833', '#41A041'],
+  ['\uE7CB', '#47838E', '#61959F'],
+  ['\uE7B0', '#218ADA', '#2496ED'],
+  ['\uE702', '#EC4F31', '#F15A3E'],
+  ['\uE76E', '#336690', '#6C92B0'],
+  ['\uE76D', '#DB382D', '#E4645B'],
+  ['\uE8D6', '#646BFE', '#787FFF'],
+  ['\uE84B', '#00995A', '#00DC82'],
+  ['\uE7C4', '#003B57', '#7393A3'],
+  ['\uE776', '#009539', '#1CA24F'],
+  ['\uE73E', '#000000', '#8F8F8F'],
+]
 
 export const GEO = {
   W: 550, PAD: 16, COLS: 48,
@@ -38,6 +55,7 @@ const T = {
   // 终态**逐行串行**：任一行的动画结束后，下一行才开始（见 doc/终态画面设计.md §6）
   rowDwell: 0.06, artDwell: 0.09, blankDwell: 0.05,       // 纯文本行 / ASCII art 行 / 空行
   dotStep: 0.022,                                          // 16 色圆点：逐颗
+  stackIconStep: 0.05,                                     // 技术栈图标：逐个（串行）
   heatCellStep: 0.0028,                                    // 热力图：逐格（行主序，像终端一行行打点）
   barCharStep: 0.016, barRowDwell: 0.05,                   // 进度条：逐格生长，条之间串行
 }
@@ -139,7 +157,8 @@ export function finalLines({ data, now }) {
   push(S('│ ', 'bd'), S(padEnd('Host', 6), 'kb'), S(' '), S(padEnd('Beijing CN', 14), 't'), S(' '), S(padEnd('Repos', 5), 'kb'), S(' '), S(l ? `${l.repos}/${l.stars} stars` : '--', 't'))
   push(S('│ ', 'bd'), S(padEnd('Local', 6), 'kb'), S(' '), S(`${ymdhm.slice(11)} (${bucketOf(hour)})`, 't'))
   push(S('│ ', 'bd'), S(padEnd('Commit', 6), 'kb'), S(' '), S(c ? `${c.total} in last 12 months` : '--', 't'))
-  push(S('│ ', 'bd'), S(padEnd('Stack', 6), 'kb'), S(' '), S(STACK.join(' '), 't'))
+  pushKind('stack', { icons: STACK.map((x, i) => [x, i]).slice(0, 8), label: 'Stack' })   // 图标行 1（8 个）
+  pushKind('stack', { icons: STACK.map((x, i) => [x, i]).slice(8) })                       // 图标行 2（7 个）
   push(...boxBotSegs())
 
   pushKind('dots')                                     // 16 色圆点
@@ -187,7 +206,7 @@ export function renderSvg({ data, now = new Date() }) {
   let y = GEO.PAD + LP
   const rows = []
   for (const l of fin) {
-    const h = l.kind === 'art' ? AP : l.kind === 'heat' ? 7 * GEO.hmPitch : LP
+    const h = l.kind === 'art' ? AP : l.kind === 'heat' ? 7 * GEO.hmPitch : l.kind === 'stack' ? 1.8 * F : LP
     rows.push({ ...l, y, h })
     y += h
   }
@@ -204,6 +223,7 @@ text{font-family:'profLee-Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monos
 .t{fill:#2E3440}.d{fill:#4C566A}.f{fill:#4C566A}
 .acc{fill:#2E6B78}.ok{fill:#47703A}.warn{fill:#7A5F14}.ka{fill:#47703A}.kb{fill:#7E527E}
 .bar{fill:#5E81AC}.be{fill:#4C566A;fill-opacity:.32}.sw{stroke:#4C566A;stroke-opacity:.55;stroke-width:.9}
+${STACK.map(([, c1], i) => `.s${i + 1}{fill:${c1}}`).join('')}
 .h0{fill:#4C566A;fill-opacity:.20}.h1{fill:#5E81AC;fill-opacity:.42}.h2{fill:#5E81AC;fill-opacity:.55}.h3{fill:#5E81AC;fill-opacity:.78}.h4{fill:#5E81AC}
 @keyframes fin{from{opacity:0}to{opacity:1}}
 @keyframes fout{from{opacity:1}to{opacity:0}}
@@ -220,6 +240,7 @@ text{font-family:'profLee-Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monos
 .pn{fill:#3B4252}.bd{fill:#434C5E}.t{fill:#ECEFF4}.d{fill:#D8DEE9}.f{fill:#81A1C1}
 .acc{fill:#88C0D0}.ok{fill:#A3BE8C}.warn{fill:#EBCB8B}.ka{fill:#A3BE8C}.kb{fill:#B48EAD}
 .bar{fill:#88C0D0}.be{fill:#434C5E}.sw{stroke:#2E3440;stroke-opacity:.9;stroke-width:.9}
+${STACK.map(([, , c2], i) => `.s${i + 1}{fill:${c2}}`).join('')}
 .h0{fill:#4C566A;fill-opacity:.55}.h1{fill:#88C0D0;fill-opacity:.22}.h2{fill:#88C0D0;fill-opacity:.38}.h3{fill:#88C0D0;fill-opacity:.65}.h4{fill:#88C0D0}
 }
 </style>`)
@@ -258,6 +279,7 @@ text{font-family:'profLee-Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monos
     const delay = tc
     tc += r.kind === 'prompt' ? 0                        // 提示符在 tFinalAt 之前就打完了
         : r.kind === 'dots' ? 16 * T.dotStep
+        : r.kind === 'stack' ? r.icons.length * T.stackIconStep
         : r.kind === 'heat' ? r.weeks.length * 7 * T.heatCellStep
         : bar ? bar.filled.length * T.barCharStep + T.barRowDwell
         : r.kind === 'art' ? T.artDwell
@@ -280,6 +302,22 @@ text{font-family:'profLee-Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monos
         cur += `<rect class="acc" x="${(base + k * 0.6 * F).toFixed(1)}" y="${cyy}" width="${cw}" height="${chh}" style="animation:fin 1ms step-start ${from.toFixed(3)}s both,fout 1ms step-start ${to.toFixed(3)}s forwards"/>`
       }
       out.push(cur)
+      continue
+    }
+    if (r.kind === 'stack') {
+      const size = (1.4 * F).toFixed(2)
+      const head = `<tspan class="bd an" style="animation-delay:${at(0)}s">│ </tspan>`
+        + `<tspan class="kb an" style="animation-delay:${at(0)}s">${esc(padEnd(r.label ?? '', 7))}</tspan>`
+      const icons = r.icons.map(([it, idx], k) =>
+        `<tspan class="s${idx + 1} an" style="font-size:${size}px;animation-delay:${at(k * T.stackIconStep)}s">${esc(it[0])}</tspan>`
+      )
+      let iconsHtml = ''
+      r.icons.forEach(([it, idx], k) => {
+        const d = at(k * T.stackIconStep)
+        if (k) iconsHtml += `<tspan class="an" style="animation-delay:${d}s">  </tspan>`
+        iconsHtml += `<tspan class="s${idx + 1} an" style="font-size:${size}px;animation-delay:${d}s">${esc(it[0])}</tspan>`
+      })
+      out.push(`<text x="${x0}" y="${(r.y + 0.22 * F).toFixed(2)}" xml:space="preserve">${head}${iconsHtml}</text>`)
       continue
     }
     if (r.kind === 'blank') continue
