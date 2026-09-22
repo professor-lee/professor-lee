@@ -182,7 +182,10 @@ export function finalLines({ data, now }) {
     const { filled, empty } = bar(lg.pct, 40, 16)
     push({ __bar: 1, label: padEnd(lg.name, 13), filled, empty, value: `${lg.pct.toFixed(1)}%`.padStart(6) })
   }
-  if (other > 0) push({ __bar: 1, label: padEnd('other', 13), filled: '', empty: '░'.repeat(16), value: `${other.toFixed(1)}%`.padStart(6) })
+  if (other > 0) {
+    const b = bar(other, 40, 16)          // 与语言行同一刻度（40% 满格、16 格宽）→ other 也有实心段
+    push({ __bar: 1, label: padEnd('other', 13), filled: b.filled, empty: b.empty, value: `${other.toFixed(1)}%`.padStart(6) })
+  }
   pushKind('blank')
 
   push(...ruleSegs('links'))
@@ -289,7 +292,8 @@ ${STACK.map(([, , c2], i) => `.s${i + 1}{fill:${c2}}`).join('')}
 
     if (r.kind === 'prompt') {
       // 提示符**立即出现**（不打字），只有 fastfetch 逐字输入
-      out.push(`<text class="an t" x="${x0}" y="${r.y.toFixed(2)}" style="animation-delay:${T.promptAt.toFixed(2)}s" xml:space="preserve">${esc(PROMPT)}</text>`)
+      // 提示符与底部那一行同色（.acc）：真实终端的"彩色提示符 + 正文色命令"分工
+      out.push(`<text class="an acc" x="${x0}" y="${r.y.toFixed(2)}" style="animation-delay:${T.promptAt.toFixed(2)}s" xml:space="preserve">${esc(PROMPT)}</text>`)
       const base = x0 + PROMPT.length * 0.6 * F          // 打字起点：紧接提示符之后
       const spans = [...TYPED].map((ch, i) => `<tspan class="an t" style="animation-delay:${(typeStart + i * T.typeCps).toFixed(3)}s">${esc(ch)}</tspan>`).join('')
       out.push(`<text x="${base.toFixed(1)}" y="${r.y.toFixed(2)}" xml:space="preserve">${spans}</text>`)
