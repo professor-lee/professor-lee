@@ -7,7 +7,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
-const CACHE = join(ROOT, '.cache', 'data.json')
+const CACHE = process.env.CACHE_FILE ?? join(ROOT, '.cache', 'data.json')   // 生产用 CACHE_FILE 指到代码目录之外，部署同步不会碰到数据
 
 // ---------- 真机事实（脱敏：不含机型/CPU/GPU/内存/磁盘，也不含任何版本号）----------
 // 见 doc/终态画面设计.md §4：只保留不具标识性的系统级事实。
