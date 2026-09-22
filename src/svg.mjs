@@ -35,9 +35,6 @@ const STACK = [
   ['\uE73E', '#000000', '#8F8F8F'],
 ]
 
-// 语言区展示清单（用户 2026-09-23 定）：按此顺序取 API 真实占比，其余全部并入 other
-const LANG_SHOW = ['Rust', 'Kotlin', 'Python', 'Vue']
-
 export const GEO = {
   W: 550, PAD: 16, COLS: 48,
   get contentW() { return this.W - 2 * (this.PAD + 1) },
@@ -81,7 +78,7 @@ function ruleSegs(label, tail = '') {
 }
 const NORD16 = ['#2E3440','#3B4252','#434C5E','#4C566A','#D8DEE9','#E5E9F0','#ECEFF4','#8FBCBB','#88C0D0','#81A1C1','#5E81AC','#BF616A','#D08770','#EBCB8B','#A3BE8C','#B48EAD']
 function bar(n, max, width = 16) {
-  const filled = max > 0 ? Math.round(width * n / max) : 0
+  const filled = Math.max(0, Math.min(width, max > 0 ? Math.round(width * n / max) : 0))
   return { filled: '█'.repeat(filled), empty: '░'.repeat(width - filled) }
 }
 const S = (t, c = 't') => ({ t, c })
@@ -117,7 +114,7 @@ export function bootLines({ data, now }) {
   L.push(ok('    0.040120', 'Fetch api.github.com'))
   L.push(ok('    0.043300', 'Fetch open-meteo Beijing'))
   L.push(plain('    0.045600', `Contributions: ${data.contrib?.total ?? '--'} / 12 months`))
-  if (data.lang) L.push(plain('    0.047900', `Languages: ${LANG_SHOW.join(' ')}`))
+  if (data.lang) L.push(plain('    0.047900', `Languages: ${data.lang.langs.slice(0, 4).map(x => x.name).join(' ')}`))
   if (late) L.push({ segs: [S('[    0.050210] ', 'f'), S(padEnd(`Late-night build: ${ymdhm.slice(11)}`, 20)), S('[ WARN ]', 'warn')] })
   L.push(plain('    0.052100', `All 18 units started in 0.052s`))
   return L
@@ -137,8 +134,8 @@ export function finalLines({ data, now }) {
   const { ymdhm, hour } = localParts(now)
   const art = read('assets/art.txt').split('\n').filter(l => l.trim().length)
   const c = data.contrib, l = data.lang, b = data.buckets, w = data.wx
-  const byName = (n) => l?.langs.find(x => x.name.toLowerCase() === n.toLowerCase())
-  const langs = l ? LANG_SHOW.map(n => ({ name: n, pct: byName(n)?.pct ?? 0 })) : []
+  const langs = l ? l.langs.slice(0, 4) : []                       // 动态：API 已按字节降序，取前四
+  const langScale = Math.max(40, Math.ceil(Math.max(0, ...langs.map(x => x.pct)) / 5) * 5)   // 满格刻度自适应
   const other = l ? Math.max(0, 100 - langs.reduce((a, x) => a + x.pct, 0)) : 0
 
   const R = []
@@ -183,11 +180,11 @@ export function finalLines({ data, now }) {
 
   push(...ruleSegs('languages', 'share'))
   for (const lg of langs) {
-    const { filled, empty } = bar(lg.pct, 40, 16)
+    const { filled, empty } = bar(lg.pct, langScale, 16)
     push({ __bar: 1, label: padEnd(lg.name, 13), filled, empty, value: `${lg.pct.toFixed(1)}%`.padStart(6) })
   }
   if (other > 0) {
-    const b = bar(other, 40, 16)          // 与语言行同一刻度（40% 满格、16 格宽）→ other 也有实心段
+    const b = bar(other, langScale, 16)   // 与语言行同一刻度（16 格宽）→ other 也有实心段
     push({ __bar: 1, label: padEnd('other', 13), filled: b.filled, empty: b.empty, value: `${other.toFixed(1)}%`.padStart(6) })
   }
   pushKind('blank')
