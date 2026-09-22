@@ -35,6 +35,9 @@ const STACK = [
   ['\uE73E', '#000000', '#8F8F8F'],
 ]
 
+// 语言区展示清单（用户 2026-09-23 定）：按此顺序取 API 真实占比，其余全部并入 other
+const LANG_SHOW = ['Rust', 'Kotlin', 'Python', 'Vue']
+
 export const GEO = {
   W: 550, PAD: 16, COLS: 48,
   get contentW() { return this.W - 2 * (this.PAD + 1) },
@@ -114,7 +117,7 @@ export function bootLines({ data, now }) {
   L.push(ok('    0.040120', 'Fetch api.github.com'))
   L.push(ok('    0.043300', 'Fetch open-meteo Beijing'))
   L.push(plain('    0.045600', `Contributions: ${data.contrib?.total ?? '--'} / 12 months`))
-  if (data.lang) L.push(plain('    0.047900', `Languages: ${data.lang.langs.slice(0, 4).map(x => x.name).join(' ')}`))
+  if (data.lang) L.push(plain('    0.047900', `Languages: ${LANG_SHOW.join(' ')}`))
   if (late) L.push({ segs: [S('[    0.050210] ', 'f'), S(padEnd(`Late-night build: ${ymdhm.slice(11)}`, 20)), S('[ WARN ]', 'warn')] })
   L.push(plain('    0.052100', `All 18 units started in 0.052s`))
   return L
@@ -134,7 +137,8 @@ export function finalLines({ data, now }) {
   const { ymdhm, hour } = localParts(now)
   const art = read('assets/art.txt').split('\n').filter(l => l.trim().length)
   const c = data.contrib, l = data.lang, b = data.buckets, w = data.wx
-  const langs = l ? l.langs.slice(0, 4) : []
+  const byName = (n) => l?.langs.find(x => x.name.toLowerCase() === n.toLowerCase())
+  const langs = l ? LANG_SHOW.map(n => ({ name: n, pct: byName(n)?.pct ?? 0 })) : []
   const other = l ? Math.max(0, 100 - langs.reduce((a, x) => a + x.pct, 0)) : 0
 
   const R = []
