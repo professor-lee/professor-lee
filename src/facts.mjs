@@ -70,7 +70,9 @@ async function cached(key, ttlSec, fn) {
   if (fresh(c[key], ttlSec)) return c[key].value
   try {
     const value = await fn()
-    if (value != null) { c[key] = { at: Date.now(), value }; saveCache(c); return value }
+    // 只更新本键（读-改-写）：四个抓取并行，若把内存里的整份快照写回会互相覆盖
+    // （实测清空缓存后连跑，只剩最后写入的那个键 —— contributions 因此丢过）
+    if (value != null) { const cur = loadCache(); cur[key] = { at: Date.now(), value }; saveCache(cur); return value }
     return c[key]?.value ?? null            // 取到 null → 退回旧值
   } catch (e) {
     console.error(`[facts] ${key} 失败：${e.message}`)

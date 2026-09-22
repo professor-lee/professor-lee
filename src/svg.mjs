@@ -193,7 +193,7 @@ export function finalLines({ data, now }) {
   pushKind('blank')
 
   push(...ruleSegs('links'))
-  for (const lk of LINKS) push(S('  ' + lk, 'acc'))
+  for (const lk of LINKS) push(S('  ' + lk, 'lnk'))
   return R
 }
 
@@ -229,7 +229,7 @@ text{font-family:'profLee-Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monos
    取「Nord 色相压暗到 ≥4.5:1」——亮色原始 Frost/Aurora 在浅底上不达标（nord10 仅 3.3:1） */
 .t{fill:#2E3440}.d{fill:#4C566A}.f{fill:#4C566A}
 .acc{fill:#2E6B78}.ok{fill:#47703A}.warn{fill:#7A5F14}.ka{fill:#47703A}.kb{fill:#7E527E}
-.bar{fill:#5E81AC}.be{fill:#4C566A;fill-opacity:.32}.sw{stroke:#4C566A;stroke-opacity:.55;stroke-width:.9}
+.bar{fill:#5E81AC}.lnk{fill:#5E81AC}.be{fill:#4C566A;fill-opacity:.32}.sw{stroke:#4C566A;stroke-opacity:.55;stroke-width:.9}
 ${STACK.map(([, c1], i) => `.s${i + 1}{fill:${c1}}`).join('')}
 .h0{fill:#4C566A;fill-opacity:.20}.h1{fill:#5E81AC;fill-opacity:.42}.h2{fill:#5E81AC;fill-opacity:.55}.h3{fill:#5E81AC;fill-opacity:.78}.h4{fill:#5E81AC}
 @keyframes fin{from{opacity:0}to{opacity:1}}
@@ -246,7 +246,7 @@ ${STACK.map(([, c1], i) => `.s${i + 1}{fill:${c1}}`).join('')}
 @media (prefers-color-scheme: dark){
 .pn{fill:#3B4252}.bd{fill:#434C5E}.t{fill:#ECEFF4}.d{fill:#D8DEE9}.f{fill:#81A1C1}
 .acc{fill:#88C0D0}.ok{fill:#A3BE8C}.warn{fill:#EBCB8B}.ka{fill:#A3BE8C}.kb{fill:#B48EAD}
-.bar{fill:#88C0D0}.be{fill:#434C5E}.sw{stroke:#2E3440;stroke-opacity:.9;stroke-width:.9}
+.bar{fill:#88C0D0}.lnk{fill:#88C0D0}.be{fill:#434C5E}.sw{stroke:#2E3440;stroke-opacity:.9;stroke-width:.9}
 ${STACK.map(([, , c2], i) => `.s${i + 1}{fill:${c2}}`).join('')}
 .h0{fill:#4C566A;fill-opacity:.55}.h1{fill:#88C0D0;fill-opacity:.22}.h2{fill:#88C0D0;fill-opacity:.38}.h3{fill:#88C0D0;fill-opacity:.65}.h4{fill:#88C0D0}
 }
