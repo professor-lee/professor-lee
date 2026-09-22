@@ -245,8 +245,8 @@ ${STACK.map(([, c1], i) => `.s${i + 1}{fill:${c1}}`).join('')}
    把入场动画整个盖掉（实测表现：boot 行从 t=0 就可见、压在开场 logo 上） */
 @media (prefers-color-scheme: dark){
 .pn{fill:#3B4252}.bd{fill:#434C5E}.t{fill:#ECEFF4}.d{fill:#D8DEE9}.f{fill:#81A1C1}
-.acc{fill:#88C0D0}.ok{fill:#A3BE8C}.warn{fill:#EBCB8B}.ka{fill:#A3BE8C}.kb{fill:#B48EAD}
-.bar{fill:#88C0D0}.lnk{fill:#88C0D0}.be{fill:#434C5E}.sw{stroke:#2E3440;stroke-opacity:.9;stroke-width:.9}
+.acc{fill:#DAA18F}.ok{fill:#A3BE8C}.warn{fill:#EBCB8B}.ka{fill:#A3BE8C}.kb{fill:#B48EAD}
+.bar{fill:#88C0D0}.lnk{fill:#88C0D0}.be{fill:#434C5E}   /* 暗色：.acc 提亮 nord12 橙 #DAA18F(4.54:1) 与 links/bar 的青 #88C0D0(5.03:1) 明确区分 */.sw{stroke:#2E3440;stroke-opacity:.9;stroke-width:.9}
 ${STACK.map(([, , c2], i) => `.s${i + 1}{fill:${c2}}`).join('')}
 .h0{fill:#4C566A;fill-opacity:.55}.h1{fill:#88C0D0;fill-opacity:.22}.h2{fill:#88C0D0;fill-opacity:.38}.h3{fill:#88C0D0;fill-opacity:.65}.h4{fill:#88C0D0}
 }
