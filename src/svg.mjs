@@ -77,6 +77,9 @@ function ruleSegs(label, tail = '') {
   return segs
 }
 const NORD16 = ['#2E3440','#3B4252','#434C5E','#4C566A','#D8DEE9','#E5E9F0','#ECEFF4','#8FBCBB','#88C0D0','#81A1C1','#5E81AC','#BF616A','#D08770','#EBCB8B','#A3BE8C','#B48EAD']
+// 「用得最多的前四」（API 按字节降序）——boot 预览行与终态语言区**共用同一取数**，避免两处各写一遍
+const topLangs = (data, n = 4) => data?.lang?.langs?.slice(0, n) ?? []
+
 function bar(n, max, width = 16) {
   const filled = Math.max(0, Math.min(width, max > 0 ? Math.round(width * n / max) : 0))
   return { filled: '█'.repeat(filled), empty: '░'.repeat(width - filled) }
@@ -114,7 +117,7 @@ export function bootLines({ data, now }) {
   L.push(ok('    0.040120', 'Fetch api.github.com'))
   L.push(ok('    0.043300', 'Fetch open-meteo Beijing'))
   L.push(plain('    0.045600', `Contributions: ${data.contrib?.total ?? '--'} / 12 months`))
-  if (data.lang) L.push(plain('    0.047900', `Languages: ${data.lang.langs.slice(0, 4).map(x => x.name).join(' ')}`))
+  if (data.lang) L.push(plain('    0.047900', `Languages: ${topLangs(data).map(x => x.name).join(' ')}`))
   if (late) L.push({ segs: [S('[    0.050210] ', 'f'), S(padEnd(`Late-night build: ${ymdhm.slice(11)}`, 20)), S('[ WARN ]', 'warn')] })
   L.push(plain('    0.052100', `All 18 units started in 0.052s`))
   return L
@@ -134,7 +137,7 @@ export function finalLines({ data, now }) {
   const { ymdhm, hour } = localParts(now)
   const art = read('assets/art.txt').split('\n').filter(l => l.trim().length)
   const c = data.contrib, l = data.lang, b = data.buckets, w = data.wx
-  const langs = l ? l.langs.slice(0, 4) : []                       // 动态：API 已按字节降序，取前四
+  const langs = l ? topLangs(data) : []                            // 与 boot 预览行同源
   const langScale = Math.max(40, Math.ceil(Math.max(0, ...langs.map(x => x.pct)) / 5) * 5)   // 满格刻度自适应
   const other = l ? Math.max(0, 100 - langs.reduce((a, x) => a + x.pct, 0)) : 0
 
