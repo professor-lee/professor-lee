@@ -13,6 +13,9 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const read = (p) => readFileSync(join(ROOT, p), 'utf8')
 
 // ---------- 几何 ----------
+// 技术栈（用户 2026-09-22 指定，顺序照给；与 GitHub 语言占比块是两件事）
+const STACK = ['Python', 'Rust', 'Java', 'Kotlin', 'Vue', 'Node.js']
+
 export const GEO = {
   W: 550, PAD: 16, COLS: 48,
   get contentW() { return this.W - 2 * (this.PAD + 1) },
@@ -134,6 +137,7 @@ export function finalLines({ data, now }) {
   push(S('│ ', 'bd'), S(padEnd('Host', 6), 'kb'), S(' '), S(padEnd('Beijing CN', 14), 't'), S(' '), S(padEnd('Repos', 5), 'kb'), S(' '), S(l ? `${l.repos}/${l.stars} stars` : '--', 't'))
   push(S('│ ', 'bd'), S(padEnd('Local', 6), 'kb'), S(' '), S(`${ymdhm.slice(11)} (${bucketOf(hour)})`, 't'))
   push(S('│ ', 'bd'), S(padEnd('Commit', 6), 'kb'), S(' '), S(c ? `${c.total} in last 12 months` : '--', 't'))
+  push(S('│ ', 'bd'), S(padEnd('Stack', 6), 'kb'), S(' '), S(STACK.join(' '), 't'))
   push(...boxBotSegs())
 
   pushKind('dots')                                     // 16 色圆点
@@ -193,7 +197,7 @@ export function renderSvg({ data, now = new Date() }) {
   out.push(`<style>
 @font-face{font-family:'profLee-Mono';font-style:normal;font-weight:400;src:url(data:font/woff2;base64,${fontB64}) format('woff2')}
 text{font-family:'profLee-Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:${F.toFixed(4)}px}
-.bg{fill:#ECEFF4}.pn{fill:#E5E9F0}.bd{fill:#D8DEE9}.t{fill:#2E3440}.d{fill:#4C566A}.f{fill:#4C566A}
+.pn{fill:#E5E9F0}.bd{fill:#D8DEE9}.t{fill:#2E3440}.d{fill:#4C566A}.f{fill:#4C566A}
 .acc{fill:#3B4252}.ok{fill:#3B4252}.warn{fill:#D08770}.ka{fill:#3B4252}.kb{fill:#3B4252}
 .bar{fill:#5E81AC}.be{fill:#4C566A;fill-opacity:.32}.sw{stroke:#4C566A;stroke-opacity:.55;stroke-width:.9}
 .h0{fill:#4C566A;fill-opacity:.20}.h1{fill:#5E81AC;fill-opacity:.42}.h2{fill:#5E81AC;fill-opacity:.55}.h3{fill:#5E81AC;fill-opacity:.78}.h4{fill:#5E81AC}
@@ -209,14 +213,14 @@ text{font-family:'profLee-Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monos
    fout 必须是 forwards 而非 both —— both 会在其延迟开始前就回填 from(opacity:1)，
    把入场动画整个盖掉（实测表现：boot 行从 t=0 就可见、压在开场 logo 上） */
 @media (prefers-color-scheme: dark){
-.bg{fill:#2E3440}.pn{fill:#3B4252}.bd{fill:#434C5E}.t{fill:#ECEFF4}.d{fill:#D8DEE9}.f{fill:#81A1C1}
+.pn{fill:#3B4252}.bd{fill:#434C5E}.t{fill:#ECEFF4}.d{fill:#D8DEE9}.f{fill:#81A1C1}
 .acc{fill:#88C0D0}.ok{fill:#A3BE8C}.warn{fill:#EBCB8B}.ka{fill:#A3BE8C}.kb{fill:#B48EAD}
 .bar{fill:#88C0D0}.be{fill:#434C5E}.sw{stroke:#2E3440;stroke-opacity:.9;stroke-width:.9}
 .h0{fill:#4C566A;fill-opacity:.55}.h1{fill:#88C0D0;fill-opacity:.22}.h2{fill:#88C0D0;fill-opacity:.38}.h3{fill:#88C0D0;fill-opacity:.65}.h4{fill:#88C0D0}
 }
 </style>`)
-  out.push(`<rect class="bg" width="${GEO.W}" height="${H}"/>`)
-  out.push(`<rect class="pn" x="${GEO.PAD}" y="${GEO.PAD}" width="${GEO.contentW + 2}" height="${H - 2 * GEO.PAD}"/>`)
+  // 单层背景：终端面板铺满整张画布（原「页面底色 + 内嵌面板」两层已合并）
+  out.push(`<rect class="pn" width="${GEO.W}" height="${H}"/>`)
 
   // 1) 开场：盲文 logo（逐行淡入 → 自上而下逐行擦除）
   // 开场 logo：t=0 直接出现（TTY 式），随后自上而下逐行"跳变"擦除
