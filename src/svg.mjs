@@ -48,10 +48,9 @@ export const GEO = {
 // ---------- 时间线（秒；不循环）----------
 const T = {
   logoOutAt: 2.40, logoOutStep: 0.13,   // logo t=0 直接出现；7 行自上而下逐行擦除（2.40→3.31s）
-  bootAt: 3.50, bootSteps: [0.10, 0.10, 0.18, 0.28, 0.75],   // 末段含 0.4s 停顿 + 2 行
-  bootOutAt: 8.80, bootOutStep: 0.02,
-  loginAt: 9.45, loginStep: 0.18, loginOutAt: 10.45, loginOutStep: 0.12,   // login 独占一屏
-  promptAt: 10.70, promptLead: 0.30, typeCps: 0.055, enterPause: 0.35,   // 提示符逐字输入 → 停顿 → 回车
+  bootAt: 3.50, bootSteps: [0.05, 0.05, 0.09, 0.14, 0.38],   // 末段含停顿感 + 2 行；整页 ≈2.7s（原 ≈5.3s）
+  bootHold: 0.35, bootOutStep: 0.012,   // 末行出现后停留 → 自上而下逐行清屏
+  promptGap: 0.15, promptLead: 0.30, typeCps: 0.055, enterPause: 0.35,   // 清屏后提示符立现 → 逐字输入 → 停顿 → 回车
   // 终态**逐行串行**：任一行的动画结束后，下一行才开始（见 doc/终态画面设计.md §6）
   rowDwell: 0.06, artDwell: 0.09, blankDwell: 0.05,       // 纯文本行 / ASCII art 行 / 空行
   dotStep: 0.022,                                          // 16 色圆点：逐颗
@@ -125,15 +124,6 @@ export function bootLines({ data, now }) {
   if (late) L.push({ segs: [S('[    0.050210] ', 'f'), S(padEnd(`Late-night build: ${ymdhm.slice(11)}`, 20)), S('[ WARN ]', 'warn')] })
   L.push(plain('    0.052100', `All 18 units started in 0.052s`))
   return L
-}
-
-// ---------- 内容：login 页（单独一页：boot 清屏后出现，进终态前再清屏）----------
-export function loginLines({ now }) {
-  const { date, time } = localParts(now)
-  return [
-    { segs: [S('professorLee login: professorLee (auto)', 'acc')] },
-    { segs: [S(`Last login: ${date} ${time} CST`, 'd')] },
-  ]
 }
 
 // ---------- 内容：终态 ----------
@@ -271,23 +261,19 @@ ${STACK.map(([, , c2], i) => `.s${i + 1}{fill:${c2}}`).join('')}
     out.push(`<text class="lgo acc" x="${logoX.toFixed(1)}" y="${(GEO.PAD + (i + 1) * LOGOP).toFixed(2)}" style="animation-delay:${(T.logoOutAt + i * T.logoOutStep).toFixed(2)}s" xml:space="preserve">${esc(row)}</text>`)
   })
 
-  // 2) boot 25 行（结束后整屏清掉；login 另起一页）
+  // 2) boot 页（结束后整屏清掉，直接进入提示符页）
   let at = T.bootAt
+  const bootAts = boot.map((_, i) => (at += i < 6 ? T.bootSteps[0] : i < 13 ? T.bootSteps[1] : i < 19 ? T.bootSteps[2] : i < 24 ? T.bootSteps[3] : T.bootSteps[4]))
+  const bootOutAt = at + T.bootHold                    // 按末行时刻推算，行数（如深夜 WARN 行）变化也不会清屏早于出现
   boot.forEach((l, i) => {
-    at += i < 6 ? T.bootSteps[0] : i < 13 ? T.bootSteps[1] : i < 19 ? T.bootSteps[2] : i < 24 ? T.bootSteps[3] : T.bootSteps[4]
     const spans = l.segs.map(s => `<tspan class="${s.c}">${esc(s.t)}</tspan>`).join('')
-    out.push(`<text class="bo" x="${x0}" y="${(GEO.PAD + (i + 1) * LP).toFixed(2)}" style="animation-delay:${at.toFixed(2)}s,${(T.bootOutAt + i * T.bootOutStep).toFixed(2)}s" xml:space="preserve">${spans}</text>`)
+    out.push(`<text class="bo" x="${x0}" y="${(GEO.PAD + (i + 1) * LP).toFixed(2)}" style="animation-delay:${bootAts[i].toFixed(2)}s,${(bootOutAt + i * T.bootOutStep).toFixed(2)}s" xml:space="preserve">${spans}</text>`)
   })
-
-  // 2b) login 页：清屏后只在顶部显示两行（新会话的"新一屏"）
-  loginLines({ now }).forEach((l, i) => {
-    const spans = l.segs.map(s => `<tspan class="${s.c}">${esc(s.t)}</tspan>`).join('')
-    out.push(`<text class="bo" x="${x0}" y="${(GEO.PAD + (i + 1) * LP).toFixed(2)}" style="animation-delay:${(T.loginAt + i * T.loginStep).toFixed(2)}s,${(T.loginOutAt + i * T.loginOutStep).toFixed(2)}s" xml:space="preserve">${spans}</text>`)
-  })
+  const promptAt = bootOutAt + boot.length * T.bootOutStep + T.promptGap
 
   // 3) 终态：提示符输入完（回车）之后**逐行串行**输出
   const TYPED = 'fastfetch'                               // 仅这段有打字效果（提示符立即出现）
-  const typeStart = T.promptAt + T.promptLead
+  const typeStart = promptAt + T.promptLead
   const enterAt = typeStart + TYPED.length * T.typeCps + T.enterPause
   const tFinalAt = enterAt + 0.10
   let tc = tFinalAt                                   // 串行游标：下一行的起始时刻 = 上一行动画结束时刻
@@ -307,7 +293,7 @@ ${STACK.map(([, , c2], i) => `.s${i + 1}{fill:${c2}}`).join('')}
     if (r.kind === 'prompt') {
       // 提示符**立即出现**（不打字），只有 fastfetch 逐字输入
       // 提示符与底部那一行同色（.acc）：真实终端的"彩色提示符 + 正文色命令"分工
-      out.push(`<text class="an acc" x="${x0}" y="${r.y.toFixed(2)}" style="animation-delay:${T.promptAt.toFixed(2)}s" xml:space="preserve">${esc(PROMPT)}</text>`)
+      out.push(`<text class="an acc" x="${x0}" y="${r.y.toFixed(2)}" style="animation-delay:${promptAt.toFixed(2)}s" xml:space="preserve">${esc(PROMPT)}</text>`)
       const base = x0 + PROMPT.length * 0.6 * F          // 打字起点：紧接提示符之后
       const spans = [...TYPED].map((ch, i) => `<tspan class="an t" style="animation-delay:${(typeStart + i * T.typeCps).toFixed(3)}s">${esc(ch)}</tspan>`).join('')
       out.push(`<text x="${base.toFixed(1)}" y="${r.y.toFixed(2)}" xml:space="preserve">${spans}</text>`)
@@ -315,7 +301,7 @@ ${STACK.map(([, , c2], i) => `.s${i + 1}{fill:${c2}}`).join('')}
       const cw = (0.6 * F).toFixed(1), chh = (F * 0.92).toFixed(1), cyy = (r.y - F * 0.8).toFixed(1)
       let cur = ''
       for (let k = 0; k <= TYPED.length; k++) {
-        const from = k === 0 ? T.promptAt : typeStart + (k - 1) * T.typeCps
+        const from = k === 0 ? promptAt : typeStart + (k - 1) * T.typeCps
         const to = k === TYPED.length ? enterAt : typeStart + k * T.typeCps
         cur += `<rect class="acc" x="${(base + k * 0.6 * F).toFixed(1)}" y="${cyy}" width="${cw}" height="${chh}" style="animation:fin 1ms step-start ${from.toFixed(3)}s both,fout 1ms step-start ${to.toFixed(3)}s forwards"/>`
       }
